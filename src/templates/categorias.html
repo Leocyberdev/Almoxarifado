@@ -1,0 +1,465 @@
+{% extends "base.html" %}
+
+{% block title %}Categorias - Sistema de Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-5 text-center mb-4">
+            <i class="bi bi-tags"></i> Gerenciamento de Categorias
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Formulário de Categoria -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> Nova Categoria
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="form-categoria">
+                    <div class="mb-3">
+                        <label for="nome-categoria" class="form-label">
+                            <i class="bi bi-tag"></i> Nome da Categoria *
+                        </label>
+                        <input type="text" class="form-control" id="nome-categoria" name="nome" required
+                               placeholder="Ex: Curva A, Material Elétrico, Ferramentas">
+                        <div class="form-text">
+                            Aceita letras maiúsculas, minúsculas, espaços, pontos e hífens
+                        </div>
+                        <div id="validacao-nome" class="form-text"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao-categoria" class="form-label">
+                            <i class="bi bi-card-text"></i> Descrição
+                        </label>
+                        <textarea class="form-control" id="descricao-categoria" name="descricao" rows="3"
+                                  placeholder="Descrição opcional da categoria"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Criar Categoria
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="limparFormulario()">
+                            <i class="bi bi-arrow-clockwise"></i> Limpar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informações sobre Validação -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Formatos Aceitos
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>Exemplos válidos:</strong>
+                </div>
+                <ul class="list-unstyled mb-0">
+                    <li><i class="bi bi-check-circle text-success"></i> Curva A</li>
+                    <li><i class="bi bi-check-circle text-success"></i> curva-b</li>
+                    <li><i class="bi bi-check-circle text-success"></i> CURVA.C</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Material Elétrico</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Ferramentas-Manuais</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Categoria.Especial</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de Categorias -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Categorias Cadastradas
+                </h5>
+                <span class="badge bg-primary" id="contador-categorias">0 categorias</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Descrição</th>
+                                <th>Produtos</th>
+                                <th>Data Criação</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-categorias">
+                            <tr>
+                                <td colspan="6" class="text-center">Carregando categorias...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edição -->
+<div class="modal fade" id="modalEdicao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square"></i> Editar Categoria
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edicao">
+                    <input type="hidden" id="edit-categoria-id">
+                    
+                    <div class="mb-3">
+                        <label for="edit-nome" class="form-label">Nome da Categoria *</label>
+                        <input type="text" class="form-control" id="edit-nome" required>
+                        <div id="edit-validacao-nome" class="form-text"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="edit-descricao" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="senha-edicao" class="form-label">Senha de Administrador *</label>
+                        <input type="password" class="form-control" id="senha-edicao" required>
+                        <div class="form-text">Senha: <code>Monter</code></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarEdicao()">
+                    <i class="bi bi-check-circle"></i> Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Exclusão -->
+<div class="modal fade" id="modalExclusao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning"></i> Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>Atenção:</strong> Esta ação irá desativar a categoria permanentemente.
+                </div>
+                
+                <p>Tem certeza que deseja excluir a categoria <strong id="nome-categoria-excluir"></strong>?</p>
+                
+                <form id="form-exclusao">
+                    <input type="hidden" id="delete-categoria-id">
+                    
+                    <div class="mb-3">
+                        <label for="senha-exclusao" class="form-label">Senha de Administrador *</label>
+                        <input type="password" class="form-control" id="senha-exclusao" required>
+                        <div class="form-text">Senha: <code>Monter</code></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarExclusao()">
+                    <i class="bi bi-trash"></i> Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let categorias = [];
+let categoriaEditando = null;
+let categoriaExcluindo = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarCategorias();
+    configurarFormularios();
+    configurarValidacao();
+});
+
+async function carregarCategorias() {
+    try {
+        const response = await fetch('/api/categorias');
+        const data = await response.json();
+        
+        if (response.ok) {
+            categorias = data;
+            atualizarTabela();
+            atualizarContador();
+        } else {
+            showAlert('Erro ao carregar categorias: ' + data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function atualizarTabela() {
+    const tbody = document.getElementById('tabela-categorias');
+    tbody.innerHTML = '';
+    
+    if (categorias.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma categoria cadastrada</td></tr>';
+        return;
+    }
+    
+    categorias.forEach(categoria => {
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+            <td><strong>${categoria.nome}</strong></td>
+            <td>${categoria.descricao || '-'}</td>
+            <td>
+                <span class="badge ${categoria.total_produtos > 0 ? 'bg-info' : 'bg-secondary'}">
+                    ${categoria.total_produtos} produto${categoria.total_produtos !== 1 ? 's' : ''}
+                </span>
+            </td>
+            <td>${formatDate(categoria.data_criacao)}</td>
+            <td>
+                <span class="badge ${categoria.ativa ? 'bg-success' : 'bg-secondary'}">
+                    ${categoria.ativa ? 'Ativa' : 'Inativa'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="editarCategoria(${categoria.id})"
+                        ${!categoria.ativa ? 'disabled' : ''}>
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="excluirCategoria(${categoria.id})"
+                        ${!categoria.ativa ? 'disabled' : ''}>
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+}
+
+function atualizarContador() {
+    const total = categorias.filter(c => c.ativa).length;
+    document.getElementById('contador-categorias').textContent = 
+        `${total} categoria${total !== 1 ? 's' : ''}`;
+}
+
+function configurarFormularios() {
+    // Formulário de criação
+    document.getElementById('form-categoria').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const dados = Object.fromEntries(formData.entries());
+        
+        // Validar nome
+        if (!validarNomeCategoria(dados.nome)) {
+            showAlert('Nome da categoria contém caracteres inválidos', 'warning');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/categorias', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert('Categoria criada com sucesso!', 'success');
+                limparFormulario();
+                carregarCategorias();
+            } else {
+                showAlert('Erro: ' + result.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Erro de conexão: ' + error.message, 'danger');
+        }
+    });
+}
+
+function configurarValidacao() {
+    // Validação em tempo real do nome
+    document.getElementById('nome-categoria').addEventListener('input', function() {
+        validarNomeEmTempoReal(this.value, 'validacao-nome');
+    });
+    
+    document.getElementById('edit-nome').addEventListener('input', function() {
+        validarNomeEmTempoReal(this.value, 'edit-validacao-nome', categoriaEditando?.id);
+    });
+}
+
+function validarNomeCategoria(nome) {
+    // Aceita letras, números, espaços, pontos e hífens
+    const regex = /^[a-zA-Z0-9\s.\-]+$/;
+    return regex.test(nome.trim());
+}
+
+async function validarNomeEmTempoReal(nome, elementoId, categoriaId = null) {
+    const elemento = document.getElementById(elementoId);
+    
+    if (!nome.trim()) {
+        elemento.textContent = '';
+        elemento.className = 'form-text';
+        return;
+    }
+    
+    if (!validarNomeCategoria(nome)) {
+        elemento.textContent = 'Caracteres inválidos. Use apenas letras, números, espaços, pontos e hífens.';
+        elemento.className = 'form-text text-danger';
+        return;
+    }
+    
+    try {
+        const url = `/api/categorias/validar-nome?nome=${encodeURIComponent(nome)}${categoriaId ? `&id=${categoriaId}` : ''}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (response.ok) {
+            elemento.textContent = result.mensagem;
+            elemento.className = `form-text ${result.valido ? 'text-success' : 'text-danger'}`;
+        }
+    } catch (error) {
+        console.error('Erro na validação:', error);
+    }
+}
+
+function editarCategoria(categoriaId) {
+    const categoria = categorias.find(c => c.id === categoriaId);
+    if (!categoria) return;
+    
+    categoriaEditando = categoria;
+    
+    document.getElementById('edit-categoria-id').value = categoria.id;
+    document.getElementById('edit-nome').value = categoria.nome;
+    document.getElementById('edit-descricao').value = categoria.descricao || '';
+    document.getElementById('senha-edicao').value = '';
+    
+    new bootstrap.Modal(document.getElementById('modalEdicao')).show();
+}
+
+async function salvarEdicao() {
+    const categoriaId = document.getElementById('edit-categoria-id').value;
+    const nome = document.getElementById('edit-nome').value.trim();
+    const descricao = document.getElementById('edit-descricao').value.trim();
+    const senha = document.getElementById('senha-edicao').value;
+    
+    if (!nome) {
+        showAlert('Nome da categoria é obrigatório', 'warning');
+        return;
+    }
+    
+    if (!validarNomeCategoria(nome)) {
+        showAlert('Nome da categoria contém caracteres inválidos', 'warning');
+        return;
+    }
+    
+    if (!senha) {
+        showAlert('Senha de administrador é obrigatória', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/categorias/${categoriaId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, descricao, senha })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('Categoria editada com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalEdicao')).hide();
+            carregarCategorias();
+        } else {
+            showAlert('Erro: ' + result.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function excluirCategoria(categoriaId) {
+    const categoria = categorias.find(c => c.id === categoriaId);
+    if (!categoria) return;
+    
+    categoriaExcluindo = categoria;
+    
+    document.getElementById('delete-categoria-id').value = categoria.id;
+    document.getElementById('nome-categoria-excluir').textContent = categoria.nome;
+    document.getElementById('senha-exclusao').value = '';
+    
+    new bootstrap.Modal(document.getElementById('modalExclusao')).show();
+}
+
+async function confirmarExclusao() {
+    const categoriaId = document.getElementById('delete-categoria-id').value;
+    const senha = document.getElementById('senha-exclusao').value;
+    
+    if (!senha) {
+        showAlert('Senha de administrador é obrigatória', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/categorias/${categoriaId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senha })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('Categoria excluída com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalExclusao')).hide();
+            carregarCategorias();
+        } else {
+            showAlert('Erro: ' + result.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function limparFormulario() {
+    document.getElementById('form-categoria').reset();
+    document.getElementById('validacao-nome').textContent = '';
+    document.getElementById('validacao-nome').className = 'form-text';
+    document.getElementById('nome-categoria').focus();
+}
+
+// Focar no campo nome ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('nome-categoria').focus();
+});
+</script>
+{% endblock %}
+

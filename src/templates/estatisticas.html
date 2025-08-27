@@ -1,0 +1,544 @@
+
+{% extends "base.html" %}
+
+{% block title %}Estatísticas - Sistema de Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-5 text-center mb-4">
+            <i class="bi bi-graph-up"></i> Estatísticas e Relatórios
+        </h1>
+    </div>
+</div>
+
+<!-- Filtros de Período -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-funnel"></i> Filtros de Período
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="filtro-periodo" class="form-label">Período</label>
+                        <select class="form-select" id="filtro-periodo" onchange="aplicarFiltroPeriodo()">
+                            <option value="dia">Hoje</option>
+                            <option value="semana">Última semana</option>
+                            <option value="mes" selected>Último mês</option>
+                            <option value="ano">Último ano</option>
+                            <option value="total">Total (Histórico completo)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="data-inicio" class="form-label">Data Início (Personalizada)</label>
+                        <input type="date" class="form-control" id="data-inicio">
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="data-fim" class="form-label">Data Fim (Personalizada)</label>
+                        <input type="date" class="form-control" id="data-fim">
+                    </div>
+                    
+                    <div class="col-md-3 mb-3 d-flex align-items-end">
+                        <div class="d-grid gap-2 w-100">
+                            <button type="button" class="btn btn-primary" onclick="aplicarPeriodoCustomizado()">
+                                <i class="bi bi-search"></i> Aplicar Período
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Economia -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="stats-card">
+            <div class="stats-number" id="economia-total">R$ 0,00</div>
+            <div class="stats-label">Economia Total</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="stats-number" id="total-alocacoes">0</div>
+            <div class="stats-label">Total de Alocações</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="stats-number" id="economia-media">R$ 0,00</div>
+            <div class="stats-label">Valor Médio por Alocação</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Gráfico de Produtos Mais Utilizados -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart"></i> Top 10 Produtos Mais Utilizados <span id="periodo-titulo">(Último mês)</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="graficoProdutosMaisUsados" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ranking de Funcionários -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-people"></i> Ranking de Funcionários
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="ranking-funcionarios">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Gráfico de Economia por Período -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up-arrow"></i> Evolução da Economia
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="graficoEconomiaMensal" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estatísticas Detalhadas -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-calculator"></i> Estatísticas Detalhadas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Movimentações</h6>
+                    <div class="d-flex justify-content-between">
+                        <span>Total de Alocações:</span>
+                        <strong id="total-alocacoes-detalhe">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Produtos Diferentes:</span>
+                        <strong id="produtos-diferentes">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Obras Atendidas:</span>
+                        <strong id="obras-atendidas">0</strong>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Valores</h6>
+                    <div class="d-flex justify-content-between">
+                        <span>Maior Alocação:</span>
+                        <strong id="maior-alocacao">R$ 0,00</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Média por Alocação:</span>
+                        <strong id="media-alocacao">R$ 0,00</strong>
+                    </div>
+                </div>
+                
+                <div>
+                    <h6>Período</h6>
+                    <div class="d-flex justify-content-between">
+                        <span>Primeira Movimentação:</span>
+                        <strong id="primeira-movimentacao">-</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Última Movimentação:</span>
+                        <strong id="ultima-movimentacao">-</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Produtos Mais Valiosos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-gem"></i> Produtos por Valor Economizado <span id="periodo-tabela">(Último mês)</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Posição</th>
+                                <th>Código</th>
+                                <th>Nome do Produto</th>
+                                <th>Categoria</th>
+                                <th>Quantidade Alocada</th>
+                                <th>Valor Total Economizado</th>
+                                <th>Valor Médio</th>
+                                <th>Última Alocação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-produtos-valiosos">
+                            <tr>
+                                <td colspan="8" class="text-center">Carregando dados...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let graficoProdutosMaisUsados, graficoEconomiaMensal;
+let periodoAtual = 'mes';
+let dataInicio = null;
+let dataFim = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarEstatisticas();
+});
+
+function aplicarFiltroPeriodo() {
+    periodoAtual = document.getElementById('filtro-periodo').value;
+    dataInicio = null;
+    dataFim = null;
+    atualizarTitulosPeriodo();
+    carregarEstatisticas();
+}
+
+function aplicarPeriodoCustomizado() {
+    const inicio = document.getElementById('data-inicio').value;
+    const fim = document.getElementById('data-fim').value;
+    
+    if (!inicio || !fim) {
+        showAlert('Por favor, selecione ambas as datas', 'warning');
+        return;
+    }
+    
+    if (new Date(inicio) > new Date(fim)) {
+        showAlert('Data de início deve ser anterior à data de fim', 'warning');
+        return;
+    }
+    
+    dataInicio = inicio;
+    dataFim = fim;
+    periodoAtual = 'customizado';
+    atualizarTitulosPeriodo();
+    carregarEstatisticas();
+}
+
+function atualizarTitulosPeriodo() {
+    let titulo = '';
+    switch(periodoAtual) {
+        case 'dia': titulo = '(Hoje)'; break;
+        case 'semana': titulo = '(Última semana)'; break;
+        case 'mes': titulo = '(Último mês)'; break;
+        case 'ano': titulo = '(Último ano)'; break;
+        case 'total': titulo = '(Total)'; break;
+        case 'customizado': 
+            titulo = `(${formatDateBR(dataInicio)} - ${formatDateBR(dataFim)})`;
+            break;
+    }
+    
+    document.getElementById('periodo-titulo').textContent = titulo;
+    document.getElementById('periodo-tabela').textContent = titulo;
+}
+
+function formatDateBR(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('pt-BR');
+}
+
+async function carregarEstatisticas() {
+    try {
+        // Montar URL com parâmetros de período
+        let url = '/api/estatisticas/geral';
+        const params = new URLSearchParams();
+        
+        if (periodoAtual === 'customizado' && dataInicio && dataFim) {
+            params.append('data_inicio', dataInicio);
+            params.append('data_fim', dataFim);
+        } else {
+            params.append('periodo', periodoAtual);
+        }
+        
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (response.ok) {
+            atualizarCardsEconomia(data);
+            criarGraficoProdutosMaisUsados(data.produtos_mais_usados || []);
+            criarGraficoEconomiaMensal(data.economia_temporal || []);
+            atualizarRankingFuncionarios(data.ranking_funcionarios || []);
+            atualizarEstatisticasDetalhadas(data);
+            atualizarTabelaProdutosValiosos(data.produtos_mais_usados || []);
+        } else {
+            showAlert('Erro ao carregar estatísticas: ' + data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function atualizarCardsEconomia(data) {
+    document.getElementById('economia-total').textContent = formatCurrency(data.economia_total || 0);
+    document.getElementById('total-alocacoes').textContent = data.total_alocacoes || 0;
+    
+    const media = data.total_alocacoes > 0 ? (data.economia_total / data.total_alocacoes) : 0;
+    document.getElementById('economia-media').textContent = formatCurrency(media);
+}
+
+function criarGraficoProdutosMaisUsados(produtos) {
+    const ctx = document.getElementById('graficoProdutosMaisUsados').getContext('2d');
+    
+    if (graficoProdutosMaisUsados) {
+        graficoProdutosMaisUsados.destroy();
+    }
+    
+    if (!produtos || produtos.length === 0) {
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#6c757d';
+        ctx.textAlign = 'center';
+        ctx.fillText('Nenhum dado disponível para o período selecionado', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+    
+    const labels = produtos.map(p => p.codigo);
+    const quantidades = produtos.map(p => p.quantidade || 0);
+    const valores = produtos.map(p => p.valor || 0);
+    
+    graficoProdutosMaisUsados = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Quantidade',
+                data: quantidades,
+                backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            }, {
+                label: 'Valor (R$)',
+                data: valores,
+                type: 'line',
+                borderColor: 'rgba(231, 76, 60, 1)',
+                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Produtos'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Quantidade'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Valor (R$)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            }
+        }
+    });
+}
+
+function criarGraficoEconomiaMensal(economiaTemporal) {
+    const ctx = document.getElementById('graficoEconomiaMensal').getContext('2d');
+    
+    if (graficoEconomiaMensal) {
+        graficoEconomiaMensal.destroy();
+    }
+    
+    if (!economiaTemporal || economiaTemporal.length === 0) {
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#6c757d';
+        ctx.textAlign = 'center';
+        ctx.fillText('Nenhum dado disponível para o período selecionado', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+    
+    const labels = economiaTemporal.map(e => e.periodo);
+    const valores = economiaTemporal.map(e => e.valor || 0);
+    
+    graficoEconomiaMensal = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Economia por Período (R$)',
+                data: valores,
+                borderColor: '#27ae60',
+                backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toLocaleString('pt-BR');
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function atualizarRankingFuncionarios(funcionarios) {
+    const container = document.getElementById('ranking-funcionarios');
+    container.innerHTML = '';
+    
+    if (!funcionarios || funcionarios.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">Nenhum dado disponível</p>';
+        return;
+    }
+    
+    funcionarios.slice(0, 10).forEach((funcionario, index) => {
+        const item = document.createElement('div');
+        item.className = 'border-bottom pb-2 mb-2';
+        
+        const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
+        
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${medalha} ${funcionario.nome}</strong><br>
+                    <small class="text-muted">${funcionario.movimentacoes} movimentações</small>
+                </div>
+                <div class="text-end">
+                    <strong>${formatCurrency(funcionario.valor || 0)}</strong>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(item);
+    });
+}
+
+function atualizarEstatisticasDetalhadas(data) {
+    document.getElementById('total-alocacoes-detalhe').textContent = data.total_alocacoes || 0;
+    document.getElementById('produtos-diferentes').textContent = data.produtos_diferentes || 0;
+    document.getElementById('obras-atendidas').textContent = data.obras_atendidas || 0;
+    document.getElementById('maior-alocacao').textContent = formatCurrency(data.maior_alocacao || 0);
+    document.getElementById('media-alocacao').textContent = formatCurrency(data.media_alocacao || 0);
+    
+    const primeiraData = data.primeira_movimentacao ? 
+        new Date(data.primeira_movimentacao).toLocaleDateString('pt-BR') : '-';
+    const ultimaData = data.ultima_movimentacao ? 
+        new Date(data.ultima_movimentacao).toLocaleDateString('pt-BR') : '-';
+    
+    document.getElementById('primeira-movimentacao').textContent = primeiraData;
+    document.getElementById('ultima-movimentacao').textContent = ultimaData;
+}
+
+function atualizarTabelaProdutosValiosos(produtos) {
+    const tbody = document.getElementById('tabela-produtos-valiosos');
+    tbody.innerHTML = '';
+    
+    if (!produtos || produtos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhum produto encontrado no período selecionado</td></tr>';
+        return;
+    }
+    
+    produtos.slice(0, 20).forEach((produto, index) => {
+        const tr = document.createElement('tr');
+        
+        const posicao = index + 1;
+        let medalha = '';
+        if (posicao === 1) medalha = '🥇';
+        else if (posicao === 2) medalha = '🥈';
+        else if (posicao === 3) medalha = '🥉';
+        
+        const valorMedio = produto.quantidade > 0 ? (produto.valor / produto.quantidade) : 0;
+        const ultimaAlocacao = produto.ultima_alocacao ? 
+            new Date(produto.ultima_alocacao).toLocaleDateString('pt-BR') : '-';
+        
+        tr.innerHTML = `
+            <td><strong>${medalha} ${posicao}º</strong></td>
+            <td><strong>${produto.codigo}</strong></td>
+            <td>${produto.nome}</td>
+            <td><span class="badge bg-primary">${produto.categoria || 'N/A'}</span></td>
+            <td>${produto.quantidade || 0}</td>
+            <td><strong>${formatCurrency(produto.valor || 0)}</strong></td>
+            <td>${formatCurrency(valorMedio)}</td>
+            <td>${ultimaAlocacao}</td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1456 @@
+{% extends "base.html" %}
+
+{% block title %}Estoque - Sistema de Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-5 text-center mb-4">
+            <i class="bi bi-archive"></i> Controle de Estoque
+        </h1>
+    </div>
+</div>
+
+<!-- Filtros e Busca -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-funnel"></i> Filtros e Busca
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="filtro-categoria" class="form-label">Categoria</label>
+                        <select class="form-select" id="filtro-categoria">
+                            <option value="">Todas as categorias</option>
+                            <!-- Categorias serão carregadas dinamicamente -->
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label for="filtro-status" class="form-label">Status</label>
+                        <select class="form-select" id="filtro-status">
+                            <option value="">Todos</option>
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Inativo</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label for="filtro-fornecedor" class="form-label">Fornecedor</label>
+                        <div class="search-container">
+                            <input type="text" class="form-control" id="filtroFornecedor" placeholder="Filtrar por fornecedor" autocomplete="off">
+                            <div class="search-results" id="fornecedoresResults"></div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label for="busca-produto" class="form-label">Busca Inteligente</label>
+                        <div class="search-container">
+                            <input type="text" class="form-control" id="busca-produto"
+                                   placeholder="Digite código ou nome do produto">
+                            <div class="search-results" id="search-results"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary" onclick="aplicarFiltros()">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="limparFiltros()">
+                            <i class="bi bi-arrow-clockwise"></i> Limpar
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="exportarEstoque()">
+                            <i class="bi bi-download"></i> Exportar
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="abrirModalExclusao()">
+                            <i class="bi bi-trash"></i> Excluir Produto
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumo do Estoque -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h4 id="total-produtos">0</h4>
+                <p class="mb-0">Total de Produtos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h4 id="produtos-estoque">0</h4>
+                <p class="mb-0">Com Estoque</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h4 id="produtos-inativos">0</h4>
+                <p class="mb-0">Produtos Inativos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <h4 id="produtos-zerado">0</h4>
+                <p class="mb-0">Estoque Zerado</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de Status do Estoque -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart"></i> Visão Geral do Estoque
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="graficoStatus" width="400" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <canvas id="graficoEstoque" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Produtos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Lista de Produtos
+                </h5>
+                <span class="badge bg-primary" id="contador-produtos">0 produtos</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nome</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Fornecedor</th>
+                                <th>Local</th>
+                                <th>Preço</th>
+                                <th>Estoque/Unidade</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-produtos">
+                            <tr>
+                                <td colspan="10" class="text-center">Carregando produtos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                <nav aria-label="Paginação">
+                    <ul class="pagination justify-content-center" id="paginacao">
+                        <!-- Paginação será gerada dinamicamente -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes do Produto -->
+<div class="modal fade" id="modalDetalhes" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle"></i> Detalhes do Produto
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modal-detalhes-body">
+                <!-- Conteúdo será carregado dinamicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="irParaAlocacao()">
+                    <i class="bi bi-arrow-right-circle"></i> Alocar Produto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edição de Produto -->
+<div class="modal fade" id="modalEdicao" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square"></i> Editar Produto
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edicao-produto">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-nome" class="form-label">Nome *</label>
+                            <input type="text" class="form-control" id="edit-nome" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-categoria" class="form-label">Categoria *</label>
+                            <select class="form-select" id="edit-categoria" required>
+                                <!-- Categorias serão carregadas dinamicamente -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="edit-descricao" rows="3"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-fornecedor" class="form-label">Fornecedor</label>
+                            <input type="text" class="form-control" id="edit-fornecedor">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-local" class="form-label">Local</label>
+                            <input type="text" class="form-control" id="edit-local">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="edit-preco" class="form-label">Preço (R$)</label>
+                            <input type="number" class="form-control" id="edit-preco" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="edit-status" class="form-label">Status</label>
+                            <select class="form-select" id="edit-status">
+                                <option value="true">Ativo</option>
+                                <option value="false">Inativo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Gerenciamento de Saldo -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-archive"></i> Gerenciar Estoque</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Estoque Atual</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-info text-white" id="estoque-atual">0</span>
+                                        <span class="input-group-text" id="unidade-atual">unidade</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="operacao-saldo" class="form-label">Operação</label>
+                                    <select class="form-select" id="operacao-saldo">
+                                        <option value="">Não alterar estoque</option>
+                                        <option value="adicionar">Adicionar ao estoque</option>
+                                        <option value="retirar">Retirar do estoque</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="quantidade-saldo" class="form-label">Quantidade</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="quantidade-saldo" 
+                                               min="0.001" step="0.001" disabled>
+                                        <span class="input-group-text" id="unidade-saldo">unidade</span>
+                                    </div>
+                                    <div class="form-text" id="ajuda-saldo" style="display: none;">
+                                        Máximo disponível para retirada: <span id="max-retirar-edit">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-senha" class="form-label">Senha de Administrador *</label>
+                        <input type="password" class="form-control" id="edit-senha" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarEdicao()">
+                    <i class="bi bi-check-circle"></i> Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Exclusão de Produto -->
+<div class="modal fade" id="modalExclusao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-trash"></i> Excluir Produto
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="busca-excluir" class="form-label">Buscar Produto para Excluir</label>
+                    <div class="search-container">
+                        <input type="text" class="form-control" id="busca-excluir" 
+                               placeholder="Digite código ou nome do produto" autocomplete="off">
+                        <div class="search-results" id="search-results-excluir"></div>
+                    </div>
+                </div>
+
+                <div id="produto-info-excluir" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6>Produto Selecionado:</h6>
+                        <div id="detalhes-produto-excluir"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="filtro-status-excluir" class="form-label">Filtrar por Status</label>
+                        <select class="form-select" id="filtro-status-excluir" onchange="filtrarProdutosExcluir()">
+                            <option value="">Todos</option>
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Inativo</option>
+                        </select>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Atenção!</strong> Esta ação irá desativar o produto. Ele não será mais exibido nas listagens ativas.
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="senha-excluir" class="form-label">Senha de Administrador *</label>
+                        <input type="password" class="form-control" id="senha-excluir" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-confirmar-exclusao" onclick="confirmarExclusao()" disabled>
+                    <i class="bi bi-trash"></i> Excluir Produto
+                </button>
+            </div>
+        </div>
+    </div>
+</div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+let produtoEdicao = null;
+let produtosCarregados = [];
+let produtoSelecionado = null;
+let paginaAtual = 1;
+const itensPorPagina = 20;
+
+// Variáveis para os gráficos
+let graficoStatus = null;
+let graficoEstoque = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarProdutos();
+    carregarCategorias();
+    configurarBuscaInteligente();
+    configurarBuscaFornecedor();
+    inicializarGraficos();
+});
+
+async function carregarCategorias() {
+    try {
+        const response = await fetch('/api/categorias');
+        const categorias = await response.json();
+
+        if (response.ok) {
+            const select = document.getElementById('filtro-categoria');
+            // Limpar opções existentes (exceto a primeira)
+            while (select.children.length > 1) {
+                select.removeChild(select.lastChild);
+            }
+
+            // Adicionar categorias ativas
+            categorias.filter(cat => cat.ativa).forEach(categoria => {
+                const option = document.createElement('option');
+                option.value = categoria.nome;
+                option.textContent = categoria.nome;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+    }
+}
+
+async function carregarProdutos() {
+    try {
+        // Construir URL com parâmetros de filtro
+        const categoria = document.getElementById('filtro-categoria').value;
+        const fornecedor = document.getElementById('filtroFornecedor').value;
+        const busca = document.getElementById('busca-produto').value;
+        const status = document.getElementById('filtro-status').value;
+
+        const params = new URLSearchParams();
+        if (categoria) params.append('categoria', categoria);
+        if (fornecedor) params.append('fornecedor', fornecedor);
+        if (busca) params.append('busca', busca);
+        if (status) params.append('status', status);
+
+        const url = '/api/produtos' + (params.toString() ? '?' + params.toString() : '');
+        const response = await fetch(url);
+        const produtos = await response.json();
+
+        if (response.ok) {
+            produtosCarregados = produtos;
+            atualizarTabela(produtos);
+            await atualizarResumo(produtos);
+        } else {
+            showAlert('Erro ao carregar produtos: ' + produtos.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+async function aplicarFiltros() {
+    // Agora aplicarFiltros apenas chama carregarProdutos que faz a filtragem no servidor
+    paginaAtual = 1; // Reset da paginação
+    await carregarProdutos();
+}
+
+function atualizarTabela(produtos) {
+    const tbody = document.getElementById('tabela-produtos');
+    tbody.innerHTML = '';
+
+    // Atualizar contador
+    atualizarContador(produtos.length);
+
+    if (produtos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center">Nenhum produto encontrado</td></tr>';
+        return;
+    }
+
+    // Paginação
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    const fim = inicio + itensPorPagina;
+    const produtosPagina = produtos.slice(inicio, fim);
+
+    produtosPagina.forEach(produto => {
+        const tr = document.createElement('tr');
+
+        let badgeCategoria = 'bg-primary';
+        if (produto.categoria.toLowerCase().includes('a')) badgeCategoria = 'bg-danger';
+        else if (produto.categoria.toLowerCase().includes('b')) badgeCategoria = 'bg-warning';
+        else if (produto.categoria.toLowerCase().includes('c')) badgeCategoria = 'bg-success';
+
+        // Status baseado em ativo/inativo
+        let statusProduto = produto.ativo ? 'Ativo' : 'Inativo';
+        let badgeStatus = produto.ativo ? 'bg-success' : 'bg-secondary';
+
+        tr.innerHTML = `
+            <td><strong>${produto.codigo}</strong></td>
+            <td>${produto.nome}</td>
+            <td>${produto.descricao || '-'}</td>
+            <td><span class="badge ${badgeCategoria}">${produto.categoria}</span></td>
+            <td>${produto.fornecedor || '-'}</td>
+            <td>${produto.local_produto || '-'}</td>
+            <td>${formatCurrency(produto.preco)}</td>
+            <td><strong>${produto.quantidade_estoque}</strong> <small class="text-muted">${produto.unidade_medida || 'unidade'}</small></td>
+            <td><span class="badge ${badgeStatus}">${statusProduto}</span></td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="verDetalhes(${produto.id})">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="editarProduto(${produto.id})" title="Editar Produto">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="excluirProduto(${produto.id})" title="Excluir Produto">
+                    <i class="bi bi-trash"></i>
+                </button>
+                ${produto.quantidade_estoque > 0 && produto.ativo ?
+                    `<button class="btn btn-sm btn-outline-success" onclick="alocarProduto(${produto.id})" title="Alocar Produto">
+                        <i class="bi bi-arrow-right-circle"></i>
+                    </button>` :
+                    `<button class="btn btn-sm btn-secondary" onclick="showAlert('Produto indisponível para alocação', 'warning')" title="Indisponível">
+                        <i class="bi bi-arrow-right-circle"></i>
+                    </button>`
+                }
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+
+    criarPaginacao(produtos.length);
+}
+
+async function atualizarResumo(produtos) {
+    const total = produtos.length;
+    const comEstoque = produtos.filter(p => p.quantidade_estoque > 0 && p.ativo).length;
+    const zerado = produtos.filter(p => p.quantidade_estoque === 0 && p.ativo).length;
+    
+    // Buscar o total real de produtos inativos, independente dos filtros
+    let inativos = 0;
+    try {
+        const response = await fetch('/api/produtos?status=inativo');
+        if (response.ok) {
+            const produtosInativos = await response.json();
+            inativos = produtosInativos.length;
+        }
+    } catch (error) {
+        console.error('Erro ao buscar produtos inativos:', error);
+        // Fallback: contar inativos dos produtos carregados
+        inativos = produtosCarregados.filter(p => !p.ativo).length;
+    }
+
+    document.getElementById("total-produtos").textContent = total;
+    document.getElementById("produtos-estoque").textContent = comEstoque;
+    document.getElementById("produtos-inativos").textContent = inativos;
+    document.getElementById("produtos-zerado").textContent = zerado;
+
+    // Atualizar gráficos
+    atualizarGraficos(total, comEstoque, inativos, zerado);
+}
+
+function atualizarContador(total) {
+    document.getElementById('contador-produtos').textContent = `${total} produto${total !== 1 ? 's' : ''}`;
+}
+
+function criarPaginacao(totalItens) {
+    const totalPaginas = Math.ceil(totalItens / itensPorPagina);
+    const paginacao = document.getElementById('paginacao');
+    paginacao.innerHTML = '';
+
+    if (totalPaginas <= 1) return;
+
+    // Botão anterior
+    const anterior = document.createElement('li');
+    anterior.className = `page-item ${paginaAtual === 1 ? 'disabled' : ''}`;
+    anterior.innerHTML = '<a class="page-link" href="#" onclick="mudarPagina(' + (paginaAtual - 1) + ')">Anterior</a>';
+    paginacao.appendChild(anterior);
+
+    // Números das páginas
+    for (let i = 1; i <= totalPaginas; i++) {
+        const item = document.createElement('li');
+        item.className = `page-item ${i === paginaAtual ? 'active' : ''}`;
+        item.innerHTML = `<a class="page-link" href="#" onclick="mudarPagina(${i})">${i}</a>`;
+        paginacao.appendChild(item);
+    }
+
+    // Botão próximo
+    const proximo = document.createElement('li');
+    proximo.className = `page-item ${paginaAtual === totalPaginas ? 'disabled' : ''}`;
+    proximo.innerHTML = '<a class="page-link" href="#" onclick="mudarPagina(' + (paginaAtual + 1) + ')">Próximo</a>';
+    paginacao.appendChild(proximo);
+}
+
+async function mudarPagina(pagina) {
+    paginaAtual = pagina;
+    await aplicarFiltros();
+}
+
+function configurarBuscaInteligente() {
+    const input = document.getElementById('busca-produto');
+    const results = document.getElementById('search-results');
+
+    input.addEventListener('input', async function() {
+        const termo = this.value.trim();
+
+        if (termo.length < 2) {
+            results.style.display = 'none';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/busca/produtos?q=${encodeURIComponent(termo)}`);
+            const produtos = await response.json();
+
+            if (response.ok) {
+                mostrarResultadosBusca(produtos);
+            }
+        } catch (error) {
+            console.error('Erro na busca:', error);
+        }
+    });
+
+    // Fechar resultados ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !results.contains(e.target)) {
+            results.style.display = 'none';
+        }
+    });
+}
+
+function mostrarResultadosBusca(produtos) {
+    const results = document.getElementById('search-results');
+    results.innerHTML = '';
+
+    if (produtos.length === 0) {
+        results.innerHTML = '<div class="search-item">Nenhum produto encontrado</div>';
+    } else {
+        produtos.forEach(produto => {
+            const item = document.createElement('div');
+            item.className = 'search-item';
+            item.innerHTML = `
+                <strong>${produto.codigo}</strong> - ${produto.nome}<br>
+                <small class="text-muted">Estoque: ${produto.estoque} | Preço: ${formatCurrency(produto.preco)}</small>
+            `;
+            item.onclick = function() {
+                document.getElementById('busca-produto').value = produto.codigo;
+                results.style.display = 'none';
+                aplicarFiltros();
+            };
+            results.appendChild(item);
+        });
+    }
+
+    results.style.display = 'block';
+}
+
+function verDetalhes(produtoId) {
+    const produto = produtosCarregados.find(p => p.id === produtoId);
+    if (!produto) return;
+
+    produtoSelecionado = produto;
+
+    const modalBody = document.getElementById('modal-detalhes-body');
+    modalBody.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Informações Básicas</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Código:</strong></td><td>${produto.codigo}</td></tr>
+                    <tr><td><strong>Nome:</strong></td><td>${produto.nome}</td></tr>
+                    <tr><td><strong>Categoria:</strong></td><td><span class="badge bg-primary">${produto.categoria}</span></td></tr>
+                    <tr><td><strong>Fornecedor:</strong></td><td>${produto.fornecedor || '-'}</td></tr>
+                    <tr><td><strong>Local:</strong></td><td>${produto.local_produto || '-'}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Estoque e Preços</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Quantidade:</strong></td><td><span class="badge bg-info">${produto.quantidade_estoque} ${produto.unidade_medida || 'unidade'}</span></td></tr>
+                    <tr><td><strong>Preço:</strong></td><td>${formatCurrency(produto.preco)}</td></tr>
+                    <tr><td><strong>Valor Total:</strong></td><td>${formatCurrency(produto.preco * produto.quantidade_estoque)}</td></tr>
+                    <tr><td><strong>Cadastrado:</strong></td><td>${formatDate(produto.data_cadastro)}</td></tr>
+                </table>
+            </div>
+        </div>
+        ${produto.descricao ? `<div class="mt-3"><h6>Descrição</h6><p>${produto.descricao}</p></div>` : ''}
+    `;
+
+    new bootstrap.Modal(document.getElementById('modalDetalhes')).show();
+}
+
+function alocarProduto(produtoId) {
+    // Redirecionar para página de alocação com produto pré-selecionado
+    window.location.href = `/produtos/alocar?produto=${produtoId}`;
+}
+
+function irParaAlocacao() {
+    if (produtoSelecionado) {
+        window.location.href = `/produtos/alocar?produto=${produtoSelecionado.id}`;
+    }
+}
+
+async function limparFiltros() {
+    document.getElementById("filtro-categoria").value = "";
+    document.getElementById("filtroFornecedor").value = "";
+    document.getElementById("busca-produto").value = "";
+    document.getElementById("filtro-status").value = ""; // Limpar o novo input de status
+    document.getElementById("search-results").style.display = "none";
+    document.getElementById("fornecedoresResults").style.display = "none";
+    paginaAtual = 1;
+    await aplicarFiltros();
+}
+
+function exportarEstoque() {
+    // Fazer download do arquivo CSV
+    window.location.href = '/api/estoque/exportar';
+    showAlert('Exportação iniciada! O download será iniciado automaticamente.', 'success');
+}
+
+function abrirModalExclusao() {
+    // Limpar campos
+    document.getElementById('busca-excluir').value = '';
+    document.getElementById('senha-excluir').value = '';
+    document.getElementById('filtro-status-excluir').value = '';
+    document.getElementById('produto-info-excluir').style.display = 'none';
+    document.getElementById('search-results-excluir').style.display = 'none';
+    document.getElementById('btn-confirmar-exclusao').disabled = true;
+
+    // Configurar busca
+    configurarBuscaExcluir();
+
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('modalExclusao'));
+    modal.show();
+}
+
+// Configuração do autocomplete para fornecedores
+function configurarBuscaFornecedor() {
+    let timeoutFornecedor;
+    const inputFornecedor = document.getElementById('filtroFornecedor');
+    const resultsDiv = document.getElementById('fornecedoresResults');
+
+    inputFornecedor.addEventListener('input', function() {
+        const termo = this.value.trim();
+
+        clearTimeout(timeoutFornecedor);
+
+        if (termo.length < 1) {
+            resultsDiv.style.display = 'none';
+            return;
+        }
+
+        timeoutFornecedor = setTimeout(async () => {
+            try {
+                // Buscar fornecedores dos produtos existentes
+                const produtos = produtosCarregados.filter(p => 
+                    p.fornecedor && p.fornecedor.toLowerCase().includes(termo.toLowerCase())
+                );
+
+                // Extrair fornecedores únicos
+                const fornecedoresUnicos = [...new Set(produtos.map(p => p.fornecedor))];
+
+                resultsDiv.innerHTML = '';
+                if (fornecedoresUnicos.length > 0) {
+                    fornecedoresUnicos.forEach(fornecedor => {
+                        const item = document.createElement('div');
+                        item.className = 'search-item';
+                        item.innerHTML = `<strong>${fornecedor}</strong>`;
+                        item.onclick = function() {
+                            selecionarFornecedor(fornecedor);
+                        };
+                        resultsDiv.appendChild(item);
+                    });
+                    resultsDiv.style.display = 'block';
+                } else {
+                    resultsDiv.innerHTML = '<div class="search-item text-muted">Nenhum fornecedor encontrado</div>';
+                    resultsDiv.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Erro ao buscar fornecedores:', error);
+                resultsDiv.style.display = 'none';
+            }
+        }, 300);
+    });
+
+    // Fechar resultados ao clicar fora do input ou da área de resultados
+    document.addEventListener('click', function(e) {
+        if (!inputFornecedor.contains(e.target) && !resultsDiv.contains(e.target)) {
+            resultsDiv.style.display = 'none';
+        }
+    });
+}
+
+async function selecionarFornecedor(nome) {
+    document.getElementById('filtroFornecedor').value = nome;
+    document.getElementById('fornecedoresResults').style.display = 'none';
+    await carregarProdutos(); // Chama carregarProdutos diretamente
+}
+
+
+// Aplicar filtros quando Enter for pressionado
+document.getElementById('filtroFornecedor').addEventListener('keypress', async function(e) {
+    if (e.key === 'Enter') {
+        await carregarProdutos();
+    }
+});
+
+document.getElementById('busca-produto').addEventListener('keypress', async function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('search-results').style.display = 'none';
+        await carregarProdutos();
+    }
+});
+
+// Helper para formatar moeda (exemplo)
+function formatCurrency(value) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+}
+
+// Helper para formatar datas (exemplo)
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+}
+
+
+
+// Função para editar produto
+async function editarProduto(produtoId) {
+    console.log('Iniciando edição do produto:', produtoId);
+
+    try {
+        const produto = produtosCarregados.find(p => p.id === produtoId);
+        if (!produto) {
+            showAlert('Produto não encontrado', 'error');
+            return;
+        }
+
+        produtoEdicao = produto;
+        console.log('Produto para edição:', produto);
+
+        // Verificar se o modal existe
+        const modalElement = document.getElementById('modalEdicao');
+        if (!modalElement) {
+            throw new Error('Modal de edição não encontrado no DOM');
+        }
+
+        // Verificar se os elementos do formulário existem
+        const elementosObrigatorios = [
+            'edit-nome', 'edit-categoria', 'edit-descricao', 
+            'edit-fornecedor', 'edit-local', 'edit-preco', 'edit-status'
+        ];
+        
+        const elementosFaltando = elementosObrigatorios.filter(id => !document.getElementById(id));
+        
+        if (elementosFaltando.length > 0) {
+            throw new Error(`Elementos do formulário não encontrados: ${elementosFaltando.join(', ')}`);
+        }
+
+        // Carregar categorias primeiro
+        try {
+            await carregarCategoriasEdicao();
+        } catch (error) {
+            console.warn('Erro ao carregar categorias, continuando sem elas:', error);
+        }
+
+        // Preencher os campos do formulário
+        preencherFormularioEdicao(produto);
+        // Configurar os controles de saldo
+        configurarControlesSaldo();
+
+        // Exibir o modal
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        console.log('Modal de edição aberto com sucesso');
+
+    } catch (error) {
+        console.error('Erro ao editar produto:', error);
+        showAlert('Erro ao abrir formulário de edição: ' + error.message, 'error');
+    }
+}
+
+// Função auxiliar para preencher formulário
+function preencherFormularioEdicao(produto) {
+    console.log('Preenchendo formulário com produto:', produto);
+
+    // Verificar se os elementos existem antes de tentar acessá-los
+    const elementos = {
+        'edit-nome': produto.nome || '',
+        'edit-descricao': produto.descricao || '',
+        'edit-categoria': produto.categoria || '',
+        'edit-fornecedor': produto.fornecedor || '',
+        'edit-local': produto.local_produto || '',
+        'edit-preco': produto.preco || 0,
+        'edit-status': produto.ativo ? 'true' : 'false'
+    };
+
+    // Preencher elementos verificando se existem
+    for (const [id, valor] of Object.entries(elementos)) {
+        const elemento = document.getElementById(id);
+        if (elemento) {
+            elemento.value = valor;
+        } else {
+            console.warn(`Elemento com ID '${id}' não encontrado`);
+        }
+    }
+
+    // Preencher informações de estoque (elementos de texto)
+    const elementosTexto = {
+        'estoque-atual': produto.quantidade_estoque || 0,
+        'unidade-atual': produto.unidade_medida || 'unidade',
+        'unidade-saldo': produto.unidade_medida || 'unidade',
+        'max-retirar-edit': produto.quantidade_estoque || 0
+    };
+
+    for (const [id, valor] of Object.entries(elementosTexto)) {
+        const elemento = document.getElementById(id);
+        if (elemento) {
+            elemento.textContent = valor;
+        } else {
+            console.warn(`Elemento com ID '${id}' não encontrado`);
+        }
+    }
+
+    console.log('Formulário preenchido com sucesso');
+}
+
+function configurarControlesSaldo() {
+    const operacaoSelect = document.getElementById('operacao-saldo');
+    const quantidadeInput = document.getElementById('quantidade-saldo');
+    const ajudaDiv = document.getElementById('ajuda-saldo');
+
+    operacaoSelect.addEventListener('change', function() {
+        const operacao = this.value;
+
+        if (operacao === '') {
+            quantidadeInput.disabled = true;
+            quantidadeInput.value = '';
+            ajudaDiv.style.display = 'none';
+        } else {
+            quantidadeInput.disabled = false;
+            quantidadeInput.focus();
+
+            if (operacao === 'retirar') {
+                ajudaDiv.style.display = 'block';
+                quantidadeInput.max = produtoEdicao.quantidade_estoque;
+            } else {
+                ajudaDiv.style.display = 'none';
+                quantidadeInput.removeAttribute('max');
+            }
+        }
+    });
+
+    // Reset ao abrir o modal
+    operacaoSelect.value = '';
+    quantidadeInput.disabled = true;
+    quantidadeInput.value = '';
+    ajudaDiv.style.display = 'none';
+}
+
+
+// Carregar categorias para o select de edição
+async function carregarCategoriasEdicao() {
+    console.log('Carregando categorias para edição...');
+
+    try {
+        const response = await fetch('/api/categorias');
+
+        if (!response.ok) {
+            throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const categorias = await response.json();
+        const select = document.getElementById('edit-categoria');
+
+        if (!select) {
+            throw new Error('Elemento select de categoria não encontrado');
+        }
+
+        // Limpar opções existentes
+        select.innerHTML = '';
+
+        // Adicionar opção padrão
+        const optionDefault = document.createElement('option');
+        optionDefault.value = '';
+        optionDefault.textContent = 'Selecione uma categoria...';
+        select.appendChild(optionDefault);
+
+        // Adicionar categorias básicas se não houver categorias da API
+        const categoriasBasicas = ['Curva A', 'Curva B', 'Curva C'];
+
+        if (categorias && Array.isArray(categorias) && categorias.length > 0) {
+            const categoriasAtivas = categorias.filter(cat => cat.ativa !== false);
+            categoriasAtivas.forEach(categoria => {
+                const option = document.createElement('option');
+                option.value = categoria.nome;
+                option.textContent = categoria.nome;
+                select.appendChild(option);
+            });
+            console.log(`Carregadas ${categoriasAtivas.length} categorias da API para edição`);
+        } else {
+            // Fallback para categorias básicas
+            categoriasBasicas.forEach(nome => {
+                const option = document.createElement('option');
+                option.value = nome;
+                option.textContent = nome;
+                select.appendChild(option);
+            });
+            console.log('Carregadas categorias básicas para edição');
+        }
+
+    } catch (error) {
+        console.error('Erro ao carregar categorias para edição:', error);
+        const select = document.getElementById('edit-categoria');
+        if (select) {
+            // Fallback em caso de erro
+            select.innerHTML = `
+                <option value="">Selecione uma categoria...</option>
+                <option value="Curva A">Curva A</option>
+                <option value="Curva B">Curva B</option>
+                <option value="Curva C">Curva C</option>
+            `;
+        }
+        // Não re-lançar o erro para não impedir a abertura do modal
+    }
+}
+
+// Salvar edição do produto
+async function salvarEdicao() {
+    if (!produtoEdicao) {
+        showAlert('Nenhum produto selecionado para edição', 'warning');
+        return;
+    }
+
+    const nome = document.getElementById('edit-nome').value.trim();
+    const categoria = document.getElementById('edit-categoria').value;
+    const senha = document.getElementById('edit-senha').value.trim();
+    const operacaoSaldo = document.getElementById('operacao-saldo').value;
+    const quantidadeSaldo = parseFloat(document.getElementById('quantidade-saldo').value) || 0;
+
+    if (!nome) {
+        showAlert('Nome do produto é obrigatório', 'warning');
+        return;
+    }
+
+    if (!categoria) {
+        showAlert('Categoria é obrigatória', 'warning');
+        return;
+    }
+
+    if (!senha) {
+        showAlert('Senha de administrador é obrigatória', 'warning');
+        return;
+    }
+
+    // Validar operação de saldo
+    if (operacaoSaldo && quantidadeSaldo <= 0) {
+        showAlert('Quantidade deve ser maior que zero para operações de saldo', 'warning');
+        return;
+    }
+
+    if (operacaoSaldo === 'retirar' && quantidadeSaldo > produtoEdicao.quantidade_estoque) {
+        showAlert('Quantidade a retirar não pode ser maior que o estoque atual', 'warning');
+        return;
+    }
+
+    try {
+        // 1. Atualizar informações do produto
+        const dadosProduto = {
+            nome: nome,
+            descricao: document.getElementById('edit-descricao').value.trim(),
+            categoria: categoria,
+            fornecedor: document.getElementById('edit-fornecedor').value.trim(),
+            local_produto: document.getElementById('edit-local').value.trim(),
+            preco: parseFloat(document.getElementById('edit-preco').value) || 0,
+            ativo: document.getElementById('edit-status').value === 'true',
+            senha: senha
+        };
+
+        const responseProduto = await fetch(`/api/produtos/${produtoEdicao.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dadosProduto)
+        });
+
+        const resultProduto = await responseProduto.json();
+
+        if (!responseProduto.ok) {
+            showAlert('Erro ao atualizar produto: ' + resultProduto.error, 'danger');
+            return;
+        }
+
+        // 2. Executar operação de saldo se necessário
+        if (operacaoSaldo && quantidadeSaldo > 0) {
+            const dadosSaldo = {
+                operacao: operacaoSaldo,
+                quantidade: quantidadeSaldo,
+                senha: senha
+            };
+
+            const responseSaldo = await fetch(`/api/produtos/${produtoEdicao.id}/saldo`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dadosSaldo)
+            });
+
+            const resultSaldo = await responseSaldo.json();
+
+            if (!responseSaldo.ok) {
+                showAlert('Produto atualizado, mas erro na operação de saldo: ' + resultSaldo.error, 'warning');
+                return;
+            }
+
+            showAlert(`Produto atualizado e saldo ${operacaoSaldo === 'adicionar' ? 'adicionado' : 'retirado'} com sucesso!`, 'success');
+        } else {
+            showAlert('Produto atualizado com sucesso!', 'success');
+        }
+
+        // Fechar modal
+        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalEdicao'));
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+
+        // Recarregar produtos
+        await carregarProdutos();
+        produtoEdicao = null;
+
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+// Variáveis para exclusão
+let produtoExclusao = null;
+let produtosFiltradosExcluir = [];
+
+// Função para excluir produto
+function excluirProduto(produtoId) {
+    const produto = produtosCarregados.find(p => p.id === produtoId);
+    if (!produto) {
+        showAlert('Produto não encontrado', 'error');
+        return;
+    }
+
+    // Definir produto para exclusão
+    produtoExclusao = produto;
+
+    // Preencher informações do produto
+    mostrarInfoProdutoExcluir(produto);
+
+    // Configurar busca
+    configurarBuscaExcluir();
+
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('modalExclusao'));
+    modal.show();
+}
+
+function mostrarInfoProdutoExcluir(produto) {
+    const infoDiv = document.getElementById('produto-info-excluir');
+    const detalhesDiv = document.getElementById('detalhes-produto-excluir');
+
+    detalhesDiv.innerHTML = `
+        <strong>Código:</strong> ${produto.codigo}<br>
+        <strong>Nome:</strong> ${produto.nome}<br>
+        <strong>Categoria:</strong> ${produto.categoria}<br>
+        <strong>Status:</strong> <span class="badge ${produto.ativo ? 'bg-success' : 'bg-secondary'}">${produto.ativo ? 'Ativo' : 'Inativo'}</span><br>
+        <strong>Estoque:</strong> ${produto.quantidade_estoque}<br>
+        <strong>Preço:</strong> ${formatCurrency(produto.preco)}
+    `;
+
+    infoDiv.style.display = 'block';
+
+    // Habilitar botão de confirmação
+    document.getElementById('btn-confirmar-exclusao').disabled = false;
+
+    // Preencher campo de busca
+    document.getElementById('busca-excluir').value = produto.codigo;
+}
+
+function configurarBuscaExcluir() {
+    const input = document.getElementById('busca-excluir');
+    const results = document.getElementById('search-results-excluir');
+    let timeoutId;
+
+    input.addEventListener('input', function() {
+        const termo = this.value.trim();
+
+        clearTimeout(timeoutId);
+
+        if (termo.length < 1) {
+            results.style.display = 'none';
+            return;
+        }
+
+        results.innerHTML = '<div class="search-item text-muted"><i class="bi bi-search"></i> Buscando...</div>';
+        results.style.display = 'block';
+
+        timeoutId = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/busca/produtos?q=${encodeURIComponent(termo)}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const produtos = await response.json();
+
+                // Aplicar filtro de status se selecionado
+                const statusFiltro = document.getElementById('filtro-status-excluir').value;
+                let produtosFiltrados = produtos;
+
+                if (statusFiltro === 'ativo') {
+                    produtosFiltrados = produtos.filter(p => p.ativo === true);
+                } else if (statusFiltro === 'inativo') {
+                    produtosFiltrados = produtos.filter(p => p.ativo === false);
+                }
+
+                mostrarResultadosBuscaExcluir(produtosFiltrados);
+            } catch (error) {
+                console.error('Erro na busca:', error);
+                results.innerHTML = '<div class="search-item text-danger">Erro na busca</div>';
+            }
+        }, 300);
+    });
+
+    // Fechar resultados ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !results.contains(e.target)) {
+            results.style.display = 'none';
+        }
+    });
+}
+
+function mostrarResultadosBuscaExcluir(produtos) {
+    const results = document.getElementById('search-results-excluir');
+    results.innerHTML = '';
+
+    if (!produtos || produtos.length === 0) {
+        results.innerHTML = '<div class="search-item text-muted"><i class="bi bi-search"></i> Nenhum produto encontrado</div>';
+        results.style.display = 'block';
+        return;
+    }
+
+    produtos.forEach(produto => {
+        const item = document.createElement('div');
+        item.className = 'search-item';
+
+        const statusBadge = produto.ativo ? 
+            '<span class="badge bg-success">Ativo</span>' : 
+            '<span class="badge bg-secondary">Inativo</span>';
+
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${produto.codigo}</strong> - ${produto.nome}<br>
+                    <small class="text-muted">Estoque: ${produto.quantidade_estoque} | Preço: ${formatCurrency(produto.preco)}</small>
+                </div>
+                <div>${statusBadge}</div>
+            </div>
+        `;
+
+        item.onclick = function() {
+            produtoExclusao = produto;
+            mostrarInfoProdutoExcluir(produto);
+            results.style.display = 'none';
+        };
+
+        results.appendChild(item);
+    });
+
+    results.style.display = 'block';
+}
+
+function filtrarProdutosExcluir() {
+    // Refazer a busca com o novo filtro
+    const termo = document.getElementById('busca-excluir').value.trim();
+    if (termo.length >= 1) {
+        document.getElementById('busca-excluir').dispatchEvent(new Event('input'));
+    }
+}
+
+async function confirmarExclusao() {
+    if (!produtoExclusao) {
+        showAlert('Nenhum produto selecionado para exclusão', 'error');
+        return;
+    }
+
+    const senha = document.getElementById('senha-excluir').value.trim();
+    if (!senha) {
+        showAlert('Senha de administrador é obrigatória', 'warning');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/produtos/${produtoExclusao.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ senha: senha })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert('Produto excluído com sucesso!', 'success');
+
+            // Fechar modal
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalExclusao'));
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+
+            // Limpar dados
+            produtoExclusao = null;
+            document.getElementById('senha-excluir').value = '';
+            document.getElementById('busca-excluir').value = '';
+            document.getElementById('produto-info-excluir').style.display = 'none';
+            document.getElementById('btn-confirmar-exclusao').disabled = true;
+
+            // Recarregar lista de produtos
+            await carregarProdutos();
+        } else {
+            showAlert('Erro ao excluir: ' + (result.error || 'Erro desconhecido'), 'danger');
+        }
+    } catch (error) {
+        console.error('Erro ao excluir produto:', error);
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+// Helper para mostrar alertas
+function showAlert(message, type = 'info') {
+    // Mapear tipos de alerta
+    const typeMap = {
+        'error': 'danger',
+        'success': 'success',
+        'warning': 'warning',
+        'info': 'info',
+        'danger': 'danger'
+    };
+
+    const alertType = typeMap[type] || 'info';
+
+    // Criar container de alertas se não existir
+    let alertContainer = document.getElementById('alert-container');
+    if (!alertContainer) {
+        alertContainer = document.createElement('div');
+        alertContainer.id = 'alert-container';
+        alertContainer.style.position = 'fixed';
+        alertContainer.style.top = '20px';
+        alertContainer.style.right = '20px';
+        alertContainer.style.zIndex = '9999';
+        alertContainer.style.width = '400px';
+        document.body.appendChild(alertContainer);
+    }
+
+    // Criar alerta
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${alertType} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+    alertContainer.appendChild(alertDiv);
+
+    // Remover alerta automaticamente após 5 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Funções dos gráficos
+function inicializarGraficos() {
+    // Gráfico de Status (Pizza)
+    const ctxStatus = document.getElementById('graficoStatus').getContext('2d');
+    graficoStatus = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: ['Ativos', 'Inativos'],
+            datasets: [{
+                data: [0, 0],
+                backgroundColor: ['#28a745', '#ffc107'],
+                borderColor: ['#ffffff', '#ffffff'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Status dos Produtos'
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Gráfico de Estoque (Barras)
+    const ctxEstoque = document.getElementById('graficoEstoque').getContext('2d');
+    graficoEstoque = new Chart(ctxEstoque, {
+        type: 'bar',
+        data: {
+            labels: ['Com Estoque', 'Estoque Zerado', 'Inativos'],
+            datasets: [{
+                label: 'Quantidade de Produtos',
+                data: [0, 0, 0],
+                backgroundColor: ['#28a745', '#dc3545', '#ffc107'],
+                borderColor: ['#28a745', '#dc3545', '#ffc107'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Distribuição do Estoque'
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function atualizarGraficos(total, comEstoque, inativos, zerado) {
+    if (graficoStatus) {
+        const ativos = total - inativos;
+        graficoStatus.data.datasets[0].data = [ativos, inativos];
+        graficoStatus.update();
+    }
+
+    if (graficoEstoque) {
+        graficoEstoque.data.datasets[0].data = [comEstoque, zerado, inativos];
+        graficoEstoque.update();
+    }
+}
+
+</script>
+{% endblock %}

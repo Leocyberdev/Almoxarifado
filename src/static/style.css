@@ -1,0 +1,43 @@
+/* Estilos para o autocomplete */
+.sugestao-item {
+    transition: background-color 0.2s ease;
+}
+
+.sugestao-item:hover,
+.sugestao-item.active {
+    background-color: #f8f9fa !important;
+}
+
+.sugestao-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Melhorar a aparência geral */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.075);
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-group .btn {
+        font-size: 0.875rem;
+    }
+}
+

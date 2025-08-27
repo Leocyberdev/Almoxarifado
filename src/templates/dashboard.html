@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema de Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4 text-center mb-4">
+            <i class="bi bi-speedometer2"></i> Dashboard do Almoxarifado
+        </h1>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="stats-number" id="economia-mes">R$ 0,00</div>
+            <div class="stats-label">Economia do Mês</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="stats-number" id="total-produtos">0</div>
+            <div class="stats-label">Total de Produtos</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="stats-number" id="movimentacoes-mes">0</div>
+            <div class="stats-label">Movimentações do Mês</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <div class="stats-number" id="produtos-ativos">0</div>
+            <div class="stats-label">Produtos Ativos</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Gráfico de Saída de Produtos -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Saída de Produtos (Últimos 7 dias)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="graficoSaidas" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Produtos Mais Movimentados -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-trophy"></i> Top 5 Produtos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="produtos-top" class="list-group list-group-flush">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Últimas Movimentações -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Últimas Movimentações
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Produto</th>
+                                <th>Tipo</th>
+                                <th>Quantidade</th>
+                                <th>Valor</th>
+                                <th>Funcionário</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ultimas-movimentacoes">
+                            <tr>
+                                <td colspan="6" class="text-center">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo por Categoria -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart"></i> Estoque por Categoria
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="graficoCategoria" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let graficoSaidas, graficoCategoria;
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarDashboard();
+});
+
+async function carregarDashboard() {
+    try {
+        const response = await fetch('/api/dashboard/stats');
+        const data = await response.json();
+
+        if (response.ok) {
+            atualizarEstatisticas(data);
+            criarGraficoSaidas(data);
+            criarGraficoCategoria(data);
+            atualizarUltimasMovimentacoes(data.ultimas_movimentacoes);
+            atualizarProdutosTop(data.produtos_movimentados);
+        } else {
+            showAlert('Erro ao carregar dados do dashboard: ' + data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function atualizarEstatisticas(data) {
+    document.getElementById('economia-mes').textContent = formatCurrency(data.economia_mes);
+
+    // Calcular totais dos resumos de categoria
+    let totalProdutos = 0;
+    let produtosAtivos = 0;
+
+    data.resumo_categorias.forEach(categoria => {
+        totalProdutos += categoria.produtos;
+        produtosAtivos += categoria.estoque;
+    });
+
+    document.getElementById('total-produtos').textContent = totalProdutos;
+    document.getElementById('produtos-ativos').textContent = produtosAtivos;
+    document.getElementById('movimentacoes-mes').textContent = data.ultimas_movimentacoes.length;
+}
+
+function criarGraficoSaidas(data) {
+    const ctx = document.getElementById('graficoSaidas').getContext('2d');
+
+    // Simular dados dos últimos 7 dias
+    const labels = [];
+    const valores = [];
+
+    for (let i = 6; i >= 0; i--) {
+        const data_atual = new Date();
+        data_atual.setDate(data_atual.getDate() - i);
+        labels.push(data_atual.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' }));
+        valores.push(Math.floor(Math.random() * 50) + 10); // Dados simulados
+    }
+
+    graficoSaidas = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Produtos Alocados',
+                data: valores,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function criarGraficoCategoria(data) {
+    const ctx = document.getElementById('graficoCategoria').getContext('2d');
+
+    const labels = data.resumo_categorias.map(cat => cat.categoria);
+    const valores = data.resumo_categorias.map(cat => cat.estoque);
+    const cores = ['#e74c3c', '#f39c12', '#27ae60'];
+
+    graficoCategoria = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: valores,
+                backgroundColor: cores,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function atualizarUltimasMovimentacoes(movimentacoes) {
+    const tbody = document.getElementById('ultimas-movimentacoes');
+    tbody.innerHTML = '';
+
+    if (movimentacoes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma movimentação encontrada</td></tr>';
+        return;
+    }
+
+    movimentacoes.forEach(mov => {
+        const tr = document.createElement('tr');
+
+        let badgeClass = 'bg-primary';
+        if (mov.tipo_movimentacao === 'ALOCACAO') badgeClass = 'bg-success';
+        else if (mov.tipo_movimentacao === 'SAIDA') badgeClass = 'bg-warning';
+        else if (mov.tipo_movimentacao === 'ENTRADA') badgeClass = 'bg-info';
+
+        tr.innerHTML = `
+            <td>${formatDate(mov.data_movimentacao)}</td>
+            <td>
+                <strong>${mov.produto ? mov.produto.codigo : 'N/A'}</strong><br>
+                <small class="text-muted">${mov.produto ? mov.produto.nome : 'N/A'}</small>
+            </td>
+            <td><span class="badge ${badgeClass}">${mov.tipo_movimentacao}</span></td>
+            <td>${mov.quantidade}</td>
+            <td>${formatCurrency(mov.valor_total)}</td>
+            <td>${mov.funcionario && mov.funcionario.nome !== 'Sistema' ? mov.funcionario.nome : (mov.funcionario ? mov.funcionario.nome : 'N/A')}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+function formatarQuantidadeComUnidade(quantidade, unidade) {
+    const sufixos = {
+        'unidade': 'unidade(s)',
+        'kilo': 'Kg',
+        'pacote': 'pacote(s)',
+        'metros': 'm',
+        'cento': 'cento(s)'
+    };
+    
+    const sufixo = sufixos[unidade] || 'unidade(s)';
+    
+    // Formatar número baseado na unidade
+    if (unidade === 'unidade' || unidade === 'pacote') {
+        return `${Math.floor(quantidade)} ${sufixo}`;
+    } else {
+        const valorFormatado = parseFloat(quantidade).toFixed(quantidade % 1 === 0 ? 0 : 3);
+        return `${valorFormatado} ${sufixo}`;
+    }
+}
+
+function atualizarProdutosTop(produtos) {
+    const container = document.getElementById('produtos-top');
+    container.innerHTML = '';
+
+    if (produtos.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">Nenhum produto movimentado</div>';
+        return;
+    }
+
+    produtos.forEach((produto, index) => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+        const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
+        
+        // Formatação da unidade de medida
+        const unidadeMedida = produto.unidade_medida || 'unidade';
+        const quantidadeFormatada = formatarQuantidadeComUnidade(produto.quantidade, unidadeMedida);
+
+        item.innerHTML = `
+            <div>
+                <strong>${medalha} ${produto.nome}</strong><br>
+                <small class="text-muted">${quantidadeFormatada}</small>
+            </div>
+            <span class="badge bg-primary rounded-pill">${produto.quantidade}</span>
+        `;
+
+        container.appendChild(item);
+    });
+}
+</script>
+{% endblock %}

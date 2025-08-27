@@ -1,0 +1,463 @@
+{% extends "base.html" %}
+
+{% block title %}Fornecedores - Sistema de Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-5 text-center mb-4">
+            <i class="bi bi-truck"></i> Gerenciamento de Fornecedores
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Formulário de Fornecedor -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> Novo Fornecedor
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="form-fornecedor">
+                    <div class="mb-3">
+                        <label for="nome-fornecedor" class="form-label">
+                            <i class="bi bi-building"></i> Nome do Fornecedor *
+                        </label>
+                        <input type="text" class="form-control" id="nome-fornecedor" name="nome" required
+                               placeholder="Ex: Construtora ABC, Materiais São José">
+                        <div id="validacao-nome" class="form-text"></div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Criar Fornecedor
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="limparFormulario()">
+                            <i class="bi bi-arrow-clockwise"></i> Limpar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informações sobre Fornecedores -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Informações
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>Dicas:</strong>
+                </div>
+                <ul class="list-unstyled mb-0">
+                    <li><i class="bi bi-check-circle text-success"></i> Use nomes descritivos</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Evite abreviações desnecessárias</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Mantenha consistência na nomenclatura</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Nomes únicos são obrigatórios</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de Fornecedores -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Fornecedores Cadastrados
+                </h5>
+                <span class="badge bg-primary" id="contador-fornecedores">0 fornecedores</span>
+            </div>
+            <div class="card-body">
+                <!-- Filtro de Busca -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="filtro-busca" 
+                                   placeholder="Buscar fornecedor...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <select class="form-select" id="filtro-status">
+                            <option value="">Todos os status</option>
+                            <option value="ativo">Ativos</option>
+                            <option value="inativo">Inativos</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Produtos</th>
+                                <th>Data Cadastro</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-fornecedores">
+                            <tr>
+                                <td colspan="5" class="text-center">Carregando fornecedores...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edição -->
+<div class="modal fade" id="modalEdicao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square"></i> Editar Fornecedor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edicao">
+                    <input type="hidden" id="edit-fornecedor-id">
+                    
+                    <div class="mb-3">
+                        <label for="edit-nome" class="form-label">Nome do Fornecedor *</label>
+                        <input type="text" class="form-control" id="edit-nome" required>
+                        <div id="edit-validacao-nome" class="form-text"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="senha-edicao" class="form-label">Senha de Administrador *</label>
+                        <input type="password" class="form-control" id="senha-edicao" required>
+                        <div class="form-text">Senha: <code>Monter</code></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarEdicao()">
+                    <i class="bi bi-check-circle"></i> Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Exclusão -->
+<div class="modal fade" id="modalExclusao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning"></i> Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>Atenção:</strong> Esta ação irá desativar o fornecedor permanentemente.
+                </div>
+                
+                <p>Tem certeza que deseja excluir o fornecedor <strong id="nome-fornecedor-excluir"></strong>?</p>
+                
+                <form id="form-exclusao">
+                    <input type="hidden" id="delete-fornecedor-id">
+                    
+                    <div class="mb-3">
+                        <label for="senha-exclusao" class="form-label">Senha de Administrador *</label>
+                        <input type="password" class="form-control" id="senha-exclusao" required>
+                        <div class="form-text">Senha: <code>Monter</code></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarExclusao()">
+                    <i class="bi bi-trash"></i> Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let fornecedores = [];
+let fornecedoresFiltrados = [];
+let fornecedorEditando = null;
+let fornecedorExcluindo = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarFornecedores();
+    configurarFormularios();
+    configurarValidacao();
+    configurarFiltros();
+});
+
+async function carregarFornecedores() {
+    try {
+        const response = await fetch('/api/fornecedores');
+        const data = await response.json();
+        
+        if (response.ok) {
+            fornecedores = data;
+            aplicarFiltros();
+        } else {
+            showAlert('Erro ao carregar fornecedores: ' + data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function aplicarFiltros() {
+    const busca = document.getElementById('filtro-busca').value.toLowerCase();
+    const status = document.getElementById('filtro-status').value;
+    
+    fornecedoresFiltrados = fornecedores.filter(fornecedor => {
+        const matchBusca = !busca || fornecedor.nome.toLowerCase().includes(busca);
+        const matchStatus = !status || 
+            (status === 'ativo' && fornecedor.ativo) ||
+            (status === 'inativo' && !fornecedor.ativo);
+        
+        return matchBusca && matchStatus;
+    });
+    
+    atualizarTabela();
+    atualizarContador();
+}
+
+function atualizarTabela() {
+    const tbody = document.getElementById('tabela-fornecedores');
+    tbody.innerHTML = '';
+    
+    if (fornecedoresFiltrados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum fornecedor encontrado</td></tr>';
+        return;
+    }
+    
+    fornecedoresFiltrados.forEach(fornecedor => {
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+            <td><strong>${fornecedor.nome}</strong></td>
+            <td>
+                <span class="badge ${fornecedor.total_produtos > 0 ? 'bg-info' : 'bg-secondary'}">
+                    ${fornecedor.total_produtos} produto${fornecedor.total_produtos !== 1 ? 's' : ''}
+                </span>
+            </td>
+            <td>${formatDate(fornecedor.data_criacao)}</td>
+            <td>
+                <span class="badge ${fornecedor.ativo ? 'bg-success' : 'bg-secondary'}">
+                    ${fornecedor.ativo ? 'Ativo' : 'Inativo'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="editarFornecedor(${fornecedor.id})"
+                        ${!fornecedor.ativo ? 'disabled' : ''}>
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="excluirFornecedor(${fornecedor.id})"
+                        ${!fornecedor.ativo ? 'disabled' : ''}>
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+}
+
+function atualizarContador() {
+    const total = fornecedoresFiltrados.filter(f => f.ativo).length;
+    document.getElementById('contador-fornecedores').textContent = 
+        `${total} fornecedor${total !== 1 ? 'es' : ''}`;
+}
+
+function configurarFiltros() {
+    document.getElementById('filtro-busca').addEventListener('input', aplicarFiltros);
+    document.getElementById('filtro-status').addEventListener('change', aplicarFiltros);
+}
+
+function configurarFormularios() {
+    // Formulário de criação
+    document.getElementById('form-fornecedor').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const dados = Object.fromEntries(formData.entries());
+        
+        try {
+            const response = await fetch('/api/fornecedores', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert('Fornecedor criado com sucesso!', 'success');
+                limparFormulario();
+                carregarFornecedores();
+            } else {
+                showAlert('Erro: ' + result.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Erro de conexão: ' + error.message, 'danger');
+        }
+    });
+}
+
+function configurarValidacao() {
+    // Validação em tempo real do nome
+    document.getElementById('nome-fornecedor').addEventListener('input', function() {
+        validarNomeEmTempoReal(this.value, 'validacao-nome');
+    });
+    
+    document.getElementById('edit-nome').addEventListener('input', function() {
+        validarNomeEmTempoReal(this.value, 'edit-validacao-nome', fornecedorEditando?.id);
+    });
+}
+
+async function validarNomeEmTempoReal(nome, elementoId, fornecedorId = null) {
+    const elemento = document.getElementById(elementoId);
+    
+    if (!nome.trim()) {
+        elemento.textContent = '';
+        elemento.className = 'form-text';
+        return;
+    }
+    
+    try {
+        const url = `/api/fornecedores/validar-nome?nome=${encodeURIComponent(nome)}${fornecedorId ? `&id=${fornecedorId}` : ''}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (response.ok) {
+            elemento.textContent = result.mensagem;
+            elemento.className = `form-text ${result.valido ? 'text-success' : 'text-danger'}`;
+        }
+    } catch (error) {
+        console.error('Erro na validação:', error);
+    }
+}
+
+function editarFornecedor(fornecedorId) {
+    const fornecedor = fornecedores.find(f => f.id === fornecedorId);
+    if (!fornecedor) return;
+    
+    fornecedorEditando = fornecedor;
+    
+    document.getElementById('edit-fornecedor-id').value = fornecedor.id;
+    document.getElementById('edit-nome').value = fornecedor.nome;
+    document.getElementById('senha-edicao').value = '';
+    
+    new bootstrap.Modal(document.getElementById('modalEdicao')).show();
+}
+
+async function salvarEdicao() {
+    const fornecedorId = document.getElementById('edit-fornecedor-id').value;
+    const nome = document.getElementById('edit-nome').value.trim();
+    const senha = document.getElementById('senha-edicao').value;
+    
+    if (!nome) {
+        showAlert('Nome do fornecedor é obrigatório', 'warning');
+        return;
+    }
+    
+    if (!senha) {
+        showAlert('Senha de administrador é obrigatória', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/fornecedores/${fornecedorId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, senha })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('Fornecedor editado com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalEdicao')).hide();
+            carregarFornecedores();
+        } else {
+            showAlert('Erro: ' + result.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function excluirFornecedor(fornecedorId) {
+    const fornecedor = fornecedores.find(f => f.id === fornecedorId);
+    if (!fornecedor) return;
+    
+    fornecedorExcluindo = fornecedor;
+    
+    document.getElementById('delete-fornecedor-id').value = fornecedor.id;
+    document.getElementById('nome-fornecedor-excluir').textContent = fornecedor.nome;
+    document.getElementById('senha-exclusao').value = '';
+    
+    new bootstrap.Modal(document.getElementById('modalExclusao')).show();
+}
+
+async function confirmarExclusao() {
+    const fornecedorId = document.getElementById('delete-fornecedor-id').value;
+    const senha = document.getElementById('senha-exclusao').value;
+    
+    if (!senha) {
+        showAlert('Senha de administrador é obrigatória', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/fornecedores/${fornecedorId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senha })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('Fornecedor excluído com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalExclusao')).hide();
+            carregarFornecedores();
+        } else {
+            showAlert('Erro: ' + result.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function limparFormulario() {
+    document.getElementById('form-fornecedor').reset();
+    document.getElementById('validacao-nome').textContent = '';
+    document.getElementById('validacao-nome').className = 'form-text';
+    document.getElementById('nome-fornecedor').focus();
+}
+
+// Focar no campo nome ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('nome-fornecedor').focus();
+});
+</script>
+{% endblock %}
+

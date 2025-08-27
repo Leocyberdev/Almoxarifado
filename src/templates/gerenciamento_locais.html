@@ -1,0 +1,345 @@
+
+{% extends "base.html" %}
+
+{% block title %}Gerenciamento de Locais - Sistema de Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">
+        <i class="bi bi-geo-alt"></i> Gerenciamento de Locais
+    </h1>
+
+    <!-- Formulário para Criar/Editar Local -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Criar/Editar Local</h5>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-success btn-sm" id="novoLocalBtn">
+                    <i class="bi bi-plus-circle"></i> Novo Local
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <form id="localForm">
+                <input type="hidden" id="localId">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="nomeLocal" class="form-label">Nome do Local *</label>
+                        <input type="text" class="form-control" id="nomeLocal" required 
+                               placeholder="Ex: Rua 4, Setor A, Galpão 1">
+                        <div class="form-text">Nome descritivo do local de armazenamento</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="posicaoLocal" class="form-label">Posição</label>
+                        <input type="text" class="form-control" id="posicaoLocal" 
+                               placeholder="Ex: 1.5, 2-A, 3.2-B"
+                               pattern="[0-9.\-]+" 
+                               title="Apenas números, pontos (.) e hífens (-)">
+                        <div class="form-text">Posição específica dentro do local (apenas números, pontos e hífens)</div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="descricaoLocal" class="form-label">Descrição</label>
+                    <textarea class="form-control" id="descricaoLocal" rows="3" 
+                              placeholder="Descrição adicional do local..."></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Salvar Local
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelarBtn">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Locais -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Lista de Locais</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome do Local</th>
+                            <th>Posição</th>
+                            <th>Descrição</th>
+                            <th>Data de Criação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaLocais">
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalExcluir" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning"></i> Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o local <strong id="nomeLocalExcluir"></strong>?</p>
+                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmarExclusao">
+                    <i class="bi bi-trash"></i> Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let editandoLocal = false;
+    let localIdAtual = null;
+    let modalExcluir;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar modal após DOM carregar
+        modalExcluir = new bootstrap.Modal(document.getElementById('modalExcluir'));
+        carregarLocais();
+        configurarEventos();
+    });
+
+    function configurarEventos() {
+        // Formulário de local
+        document.getElementById('localForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            salvarLocal();
+        });
+
+        // Novo local
+        document.getElementById('novoLocalBtn').addEventListener('click', function() {
+            limparFormulario();
+        });
+
+        // Cancelar edição
+        document.getElementById('cancelarBtn').addEventListener('click', function() {
+            limparFormulario();
+        });
+
+        // Validar posição em tempo real
+        document.getElementById('posicaoLocal').addEventListener('input', function() {
+            const valor = this.value;
+            const regex = /^[0-9.\-]*$/;
+            
+            if (!regex.test(valor)) {
+                this.value = valor.replace(/[^0-9.\-]/g, '');
+                showAlert('Posição deve conter apenas números, pontos (.) e hífens (-)', 'warning');
+            }
+        });
+
+        // Confirmação de exclusão
+        document.getElementById('confirmarExclusao').addEventListener('click', function() {
+            excluirLocal(localIdAtual);
+        });
+    }
+
+    async function carregarLocais() {
+        try {
+            const response = await fetch('/api/locais');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const locais = await response.json();
+            
+            const tbody = document.getElementById('listaLocais');
+            
+            if (locais.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> Nenhum local cadastrado
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = locais.map(local => `
+                    <tr>
+                        <td><strong>${local.nome_local}</strong></td>
+                        <td>
+                            ${local.posicao ? `<span class="badge bg-info">${local.posicao}</span>` : '<span class="text-muted">-</span>'}
+                        </td>
+                        <td>
+                            ${local.descricao ? 
+                                (local.descricao.length > 50 ? 
+                                    local.descricao.substring(0, 50) + '...' : 
+                                    local.descricao
+                                ) : 
+                                '<span class="text-muted">-</span>'
+                            }
+                        </td>
+                        <td>
+                            ${new Date(local.data_criacao).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary btn-sm" 
+                                        onclick="editarLocal(${local.id})" 
+                                        title="Editar Local">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" 
+                                        onclick="confirmarExclusaoLocal(${local.id}, '${local.nome_local}')" 
+                                        title="Excluir Local">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar locais:', error);
+            showAlert('Erro ao carregar locais', 'danger');
+        }
+    }
+
+    async function salvarLocal() {
+        try {
+            const nomeLocal = document.getElementById('nomeLocal').value.trim();
+            const posicaoLocal = document.getElementById('posicaoLocal').value.trim();
+            const descricaoLocal = document.getElementById('descricaoLocal').value.trim();
+
+            if (!nomeLocal) {
+                showAlert('Nome do local é obrigatório', 'warning');
+                return;
+            }
+
+            const dadosLocal = {
+                nome_local: nomeLocal,
+                posicao: posicaoLocal,
+                descricao: descricaoLocal
+            };
+
+            let response;
+            if (editandoLocal) {
+                response = await fetch(`/api/locais/${localIdAtual}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dadosLocal)
+                });
+            } else {
+                response = await fetch('/api/locais', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dadosLocal)
+                });
+            }
+
+            const resultado = await response.json();
+
+            if (response.ok) {
+                showAlert(
+                    editandoLocal ? 'Local atualizado com sucesso!' : 'Local criado com sucesso!', 
+                    'success'
+                );
+                limparFormulario();
+                carregarLocais();
+            } else {
+                showAlert(resultado.error || 'Erro ao salvar local', 'danger');
+            }
+        } catch (error) {
+            console.error('Erro ao salvar local:', error);
+            showAlert('Erro ao salvar local', 'danger');
+        }
+    }
+
+    async function editarLocal(localId) {
+        try {
+            const response = await fetch('/api/locais');
+            const locais = await response.json();
+            const local = locais.find(l => l.id === localId);
+
+            if (local) {
+                document.getElementById('localId').value = local.id;
+                document.getElementById('nomeLocal').value = local.nome_local;
+                document.getElementById('posicaoLocal').value = local.posicao || '';
+                document.getElementById('descricaoLocal').value = local.descricao || '';
+
+                editandoLocal = true;
+                localIdAtual = localId;
+
+                // Atualizar interface
+                document.querySelector('.card-header h5').textContent = 'Editar Local';
+                document.querySelector('button[type="submit"]').innerHTML = 
+                    '<i class="bi bi-check-circle"></i> Atualizar Local';
+
+                // Scroll para o formulário
+                document.getElementById('localForm').scrollIntoView({ behavior: 'smooth' });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar local para edição:', error);
+            showAlert('Erro ao carregar local para edição', 'danger');
+        }
+    }
+
+    function confirmarExclusaoLocal(localId, nomeLocal) {
+        localIdAtual = localId;
+        document.getElementById('nomeLocalExcluir').textContent = nomeLocal;
+        modalExcluir.show();
+    }
+
+    async function excluirLocal(localId) {
+        try {
+            const response = await fetch(`/api/locais/${localId}`, {
+                method: 'DELETE'
+            });
+
+            const resultado = await response.json();
+
+            if (response.ok) {
+                showAlert('Local excluído com sucesso!', 'success');
+                carregarLocais();
+                modalExcluir.hide();
+            } else {
+                showAlert(resultado.error || 'Erro ao excluir local', 'danger');
+            }
+        } catch (error) {
+            console.error('Erro ao excluir local:', error);
+            showAlert('Erro ao excluir local', 'danger');
+        }
+    }
+
+    function limparFormulario() {
+        document.getElementById('localForm').reset();
+        document.getElementById('localId').value = '';
+        
+        editandoLocal = false;
+        localIdAtual = null;
+
+        // Restaurar interface
+        document.querySelector('.card-header h5').textContent = 'Criar/Editar Local';
+        document.querySelector('button[type="submit"]').innerHTML = 
+            '<i class="bi bi-check-circle"></i> Salvar Local';
+    }
+</script>
+{% endblock %}

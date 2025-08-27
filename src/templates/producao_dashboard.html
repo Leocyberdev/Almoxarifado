@@ -1,0 +1,1039 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel da Produção</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #ecf0f1;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .nav-link {
+            transition: all 0.3s ease;
+            border-radius: 5px;
+            margin: 0 2px;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+            transform: translateY(-1px);
+        }
+
+        .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+            font-weight: bold;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+            min-height: calc(100vh - 76px);
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: bold;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            font-weight: bold;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            transform: scale(1.01);
+        }
+
+        .badge {
+            border-radius: 20px;
+            padding: 0.5em 1em;
+        }
+
+        .dropdown-menu {
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .dropdown-item {
+            border-radius: 5px;
+            margin: 2px 5px;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--light-bg);
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar Específica da Produção -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/producao">
+                <i class="bi bi-gear-wide-connected"></i> Produção
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="mostrarAba('consulta')">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarAba('consulta')">
+                            <i class="bi bi-search"></i> Consulta de Estoque
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarAba('obras')">
+                            <i class="bi bi-hammer"></i> Obras
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarAba('requisicao')">
+                            <i class="bi bi-plus-circle"></i> Nova Requisição
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarAba('minhas-req')">
+                            <i class="bi bi-list-check"></i> Minhas Requisições
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span id="username-display">Usuário</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalAlterarSenha">
+                                <i class="bi bi-key"></i> Alterar Senha
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">
+                                <i class="bi bi-box-arrow-right"></i> Sair
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h1 class="display-4 text-center mb-4">
+                        <i class="bi bi-gear-wide-connected"></i> Painel da Produção
+                    </h1>
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Bem-vindo <span id="nome-usuario-welcome">ao sistema da Produção</span>!</strong> Aqui você pode consultar estoque e fazer requisições de materiais.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards de Estatísticas -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-number" id="total-produtos">0</div>
+                        <div class="stats-label">Produtos Disponíveis</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div class="stats-number" id="minhas-requisicoes">0</div>
+                        <div class="stats-label">Minhas Requisições</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="stats-number" id="requisicoes-pendentes">0</div>
+                        <div class="stats-label">Requisições Pendentes</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <div class="stats-number" id="valor-estoque">R$ 0,00</div>
+                        <div class="stats-label">Valor Total em Estoque</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abas de Navegação -->
+            <ul class="nav nav-tabs" id="producaoTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="consulta-tab" data-bs-toggle="tab" data-bs-target="#consulta" type="button" role="tab">
+                        <i class="bi bi-search"></i> Consulta de Estoque
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="obras-tab" data-bs-toggle="tab" data-bs-target="#obras" type="button" role="tab">
+                        <i class="bi bi-hammer"></i> Obras
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="requisicao-tab" data-bs-toggle="tab" data-bs-target="#requisicao" type="button" role="tab">
+                        <i class="bi bi-plus-circle"></i> Nova Requisição
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="minhas-req-tab" data-bs-toggle="tab" data-bs-target="#minhas-req" type="button" role="tab">
+                        <i class="bi bi-list-check"></i> Minhas Requisições
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="producaoTabsContent">
+                <!-- Consulta de Estoque -->
+                <div class="tab-pane fade show active" id="consulta" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5 class="mb-0"><i class="bi bi-archive"></i> Consulta de Estoque</h5>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" class="form-control" id="busca-estoque" placeholder="Buscar produto...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Nome</th>
+                                            <th>Categoria</th>
+                                            <th>Estoque</th>
+                                            <th>Local</th>
+                                            <th>Valor Unit.</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="estoque-tbody">
+                                        <tr>
+                                            <td colspan="7" class="text-center">Carregando...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Obras -->
+                <div class="tab-pane fade" id="obras" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5 class="mb-0"><i class="bi bi-hammer"></i> Consulta de Obras</h5>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" class="form-control" id="busca-obras" placeholder="Buscar obra por número ou nome...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="filtro-status-obras" class="form-label">Filtrar por Status:</label>
+                                    <select class="form-select" id="filtro-status-obras">
+                                        <option value="">Todos os Status</option>
+                                        <option value="Prevista">Prevista</option>
+                                        <option value="Em Andamento">Em Andamento</option>
+                                        <option value="Pausada">Pausada</option>
+                                        <option value="Entregue">Entregue</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="obras-lista">
+                                <div class="text-center">Carregando obras...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nova Requisição -->
+                <div class="tab-pane fade" id="requisicao" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Nova Requisição</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="form-requisicao">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="produto-requisicao" class="form-label">Produto *</label>
+                                        <div class="position-relative">
+                                            <input type="text" class="form-control" id="produto-requisicao" placeholder="Digite para buscar produto..." required>
+                                            <div id="produto-suggestions" class="dropdown-menu position-absolute w-100" style="display: none;"></div>
+                                        </div>
+                                        <input type="hidden" id="produto-id-requisicao">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="obra-requisicao" class="form-label">Obra *</label>
+                                        <div class="position-relative">
+                                            <input type="text" class="form-control" id="obra-requisicao" placeholder="Digite para buscar obra..." required>
+                                            <div id="obra-suggestions" class="dropdown-menu position-absolute w-100" style="display: none;"></div>
+                                        </div>
+                                        <input type="hidden" id="obra-id-requisicao">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="quantidade-requisicao" class="form-label">Quantidade *</label>
+                                        <input type="number" class="form-control" id="quantidade-requisicao" min="0.1" step="0.1" required>
+                                        <small class="text-muted">Disponível: <span id="estoque-disponivel">0</span></small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="observacoes-requisicao" class="form-label">Observações</label>
+                                        <textarea class="form-control" id="observacoes-requisicao" rows="3" placeholder="Observações sobre a requisição..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button type="reset" class="btn btn-secondary me-2">Limpar</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-send"></i> Enviar Requisição
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minhas Requisições -->
+                <div class="tab-pane fade" id="minhas-req" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Minhas Requisições</h5>
+                                </div>
+                                <div class="col-md-6">
+                                    <select class="form-select" id="filtro-status">
+                                        <option value="">Todos os Status</option>
+                                        <option value="PENDENTE">Pendentes</option>
+                                        <option value="ATENDIDA">Atendidas</option>
+                                        <option value="PARCIAL">Parciais</option>
+                                        <option value="CANCELADA">Canceladas</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="minhas-requisicoes-lista">
+                                <div class="text-center">Carregando...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Alterar Senha -->
+    <div class="modal fade" id="modalAlterarSenha" tabindex="-1" aria-labelledby="modalAlterarSenhaLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAlterarSenhaLabel">
+                        <i class="bi bi-key"></i> Alterar Senha
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formAlterarSenha">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="senhaAtual" class="form-label">Senha Atual *</label>
+                            <input type="password" class="form-control" id="senhaAtual" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="novaSenha" class="form-label">Nova Senha *</label>
+                            <input type="password" class="form-control" id="novaSenha" required minlength="6">
+                            <div class="form-text">A senha deve ter pelo menos 6 caracteres</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmarSenha" class="form-label">Confirmar Nova Senha *</label>
+                            <input type="password" class="form-control" id="confirmarSenha" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Alterar Senha</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let produtoSelecionado = null;
+        let obraSelecionada = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarDashboard();
+            configurarEventos();
+            carregarEstoque();
+            carregarNomeUsuario();
+            configurarAlterarSenha();
+        });
+
+        function configurarEventos() {
+            // Busca de produto para requisição
+            document.getElementById('produto-requisicao').addEventListener('input', buscarProdutos);
+            document.getElementById('obra-requisicao').addEventListener('input', buscarObras);
+            
+            // Form de requisição
+            document.getElementById('form-requisicao').addEventListener('submit', enviarRequisicao);
+            
+            // Busca no estoque
+            document.getElementById('busca-estoque').addEventListener('input', filtrarEstoque);
+            
+            // Filtro de status das requisições
+            document.getElementById('filtro-status').addEventListener('change', carregarMinhasRequisicoes);
+            
+            // Event listeners para as abas
+            document.getElementById('obras-tab').addEventListener('click', carregarObras);
+            document.getElementById('minhas-req-tab').addEventListener('click', carregarMinhasRequisicoes);
+            
+            // Event listeners para filtros de obras
+            document.getElementById('filtro-status-obras').addEventListener('change', carregarObras);
+            document.getElementById('busca-obras').addEventListener('input', function() {
+                clearTimeout(this.buscaTimeout);
+                this.buscaTimeout = setTimeout(carregarObras, 300);
+            });
+        }
+
+        function mostrarAba(abaId) {
+            // Remover classe active de todos os links do navbar
+            document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adicionar active no link clicado
+            event.target.classList.add('active');
+            
+            // Ativar a aba correspondente
+            const tabButton = document.getElementById(abaId + '-tab');
+            if (tabButton) {
+                tabButton.click();
+            }
+            
+            // Carregar dados específicos da aba se necessário
+            if (abaId === 'obras') {
+                carregarObras();
+            } else if (abaId === 'minhas-req') {
+                carregarMinhasRequisicoes();
+            }
+        }
+
+        async function carregarNomeUsuario() {
+            try {
+                const response = await fetch('/api/user/current');
+                const user = await response.json();
+                const username = user.username || 'Usuário';
+                document.getElementById('username-display').textContent = username;
+                document.getElementById('nome-usuario-welcome').textContent = username;
+            } catch (error) {
+                console.error('Erro ao carregar nome do usuário:', error);
+            }
+        }
+
+        async function carregarDashboard() {
+            try {
+                const response = await fetch('/api/producao/dashboard/stats');
+                const stats = await response.json();
+                
+                document.getElementById('total-produtos').textContent = stats.total_produtos || 0;
+                document.getElementById('minhas-requisicoes').textContent = stats.minhas_requisicoes || 0;
+                document.getElementById('requisicoes-pendentes').textContent = stats.requisicoes_pendentes || 0;
+                document.getElementById('valor-estoque').textContent = formatCurrency(stats.valor_estoque || 0);
+                
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+            }
+        }
+
+        async function carregarEstoque() {
+            try {
+                const response = await fetch('/api/produtos?status=ativo');
+                const produtos = await response.json();
+                
+                const tbody = document.getElementById('estoque-tbody');
+                if (produtos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum produto encontrado</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = produtos.map(produto => `
+                    <tr>
+                        <td>${produto.codigo}</td>
+                        <td>${produto.nome}</td>
+                        <td><span class="badge bg-secondary">${produto.categoria}</span></td>
+                        <td>
+                            <span class="badge ${produto.quantidade_estoque > 0 ? 'bg-success' : 'bg-danger'}">
+                                ${formatarQuantidadeComUnidade(produto.quantidade_estoque, produto.unidade_medida)}
+                            </span>
+                        </td>
+                        <td>${produto.local_produto || '-'}</td>
+                        <td>${formatCurrency(produto.preco)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="requisitarProduto(${produto.id}, '${produto.nome}', '${produto.codigo}', ${produto.quantidade_estoque}, '${produto.unidade_medida}')">
+                                <i class="bi bi-plus"></i> Requisitar
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Erro ao carregar estoque:', error);
+                showAlert('Erro ao carregar estoque', 'danger');
+            }
+        }
+
+        function filtrarEstoque() {
+            const busca = document.getElementById('busca-estoque').value.toLowerCase();
+            const linhas = document.querySelectorAll('#estoque-tbody tr');
+            
+            linhas.forEach(linha => {
+                const texto = linha.textContent.toLowerCase();
+                linha.style.display = texto.includes(busca) ? '' : 'none';
+            });
+        }
+
+        function requisitarProduto(id, nome, codigo, estoque, unidade) {
+            // Mudar para a aba de requisição
+            document.getElementById('requisicao-tab').click();
+            
+            // Preencher os campos
+            document.getElementById('produto-requisicao').value = `${codigo} - ${nome}`;
+            document.getElementById('produto-id-requisicao').value = id;
+            document.getElementById('estoque-disponivel').textContent = formatarQuantidadeComUnidade(estoque, unidade);
+            
+            produtoSelecionado = { id, nome, codigo, estoque, unidade_medida: unidade };
+        }
+
+        async function buscarProdutos() {
+            const termo = document.getElementById('produto-requisicao').value;
+            if (termo.length < 2) {
+                document.getElementById('produto-suggestions').style.display = 'none';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/busca/produtos?q=${encodeURIComponent(termo)}`);
+                const produtos = await response.json();
+                
+                const suggestions = document.getElementById('produto-suggestions');
+                if (produtos.length === 0) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+                
+                suggestions.innerHTML = produtos.map(produto => `
+                    <a class="dropdown-item" href="#" onclick="selecionarProduto(${produto.id}, '${produto.nome}', '${produto.codigo}', ${produto.quantidade_estoque}, '${produto.unidade_medida}')">
+                        <strong>${produto.codigo}</strong> - ${produto.nome}
+                        <br><small class="text-muted">Estoque: ${formatarQuantidadeComUnidade(produto.quantidade_estoque, produto.unidade_medida)}</small>
+                    </a>
+                `).join('');
+                
+                suggestions.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Erro ao buscar produtos:', error);
+            }
+        }
+
+        function selecionarProduto(id, nome, codigo, estoque, unidade) {
+            document.getElementById('produto-requisicao').value = `${codigo} - ${nome}`;
+            document.getElementById('produto-id-requisicao').value = id;
+            document.getElementById('estoque-disponivel').textContent = formatarQuantidadeComUnidade(estoque, unidade);
+            document.getElementById('produto-suggestions').style.display = 'none';
+            
+            produtoSelecionado = { id, nome, codigo, estoque, unidade_medida: unidade };
+        }
+
+        async function buscarObras() {
+            const termo = document.getElementById('obra-requisicao').value;
+            if (termo.length < 2) {
+                document.getElementById('obra-suggestions').style.display = 'none';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/obras/sugestoes?termo=${encodeURIComponent(termo)}`);
+                const obras = await response.json();
+                
+                const suggestions = document.getElementById('obra-suggestions');
+                if (obras.length === 0) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+                
+                suggestions.innerHTML = obras.map(obra => `
+                    <a class="dropdown-item" href="#" onclick="selecionarObra(${obra.id}, '${obra.numero_obra}', '${obra.nome_obra}')">
+                        <strong>${obra.numero_obra}</strong> - ${obra.nome_obra}
+                    </a>
+                `).join('');
+                
+                suggestions.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Erro ao buscar obras:', error);
+            }
+        }
+
+        function selecionarObra(id, numero, nome) {
+            document.getElementById('obra-requisicao').value = `${numero} - ${nome}`;
+            document.getElementById('obra-id-requisicao').value = id;
+            document.getElementById('obra-suggestions').style.display = 'none';
+            
+            obraSelecionada = { id, numero_obra: numero, nome_obra: nome };
+        }
+
+        async function enviarRequisicao(event) {
+            event.preventDefault();
+            
+            const produtoId = document.getElementById('produto-id-requisicao').value;
+            const obraId = document.getElementById('obra-id-requisicao').value;
+            const quantidade = parseFloat(document.getElementById('quantidade-requisicao').value);
+            const observacoes = document.getElementById('observacoes-requisicao').value;
+            
+            if (!produtoId || !obraId || !quantidade) {
+                showAlert('Preencha todos os campos obrigatórios', 'warning');
+                return;
+            }
+            
+            if (produtoSelecionado && quantidade > produtoSelecionado.estoque) {
+                showAlert('Quantidade solicitada maior que o estoque disponível', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/producao/requisicoes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        produto_id: parseInt(produtoId),
+                        obra_id: parseInt(obraId),
+                        quantidade: quantidade,
+                        observacoes: observacoes
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Requisição enviada com sucesso!', 'success');
+                    document.getElementById('form-requisicao').reset();
+                    document.getElementById('produto-suggestions').style.display = 'none';
+                    document.getElementById('obra-suggestions').style.display = 'none';
+                    produtoSelecionado = null;
+                    obraSelecionada = null;
+                    carregarDashboard();
+                } else {
+                    showAlert('Erro: ' + result.error, 'danger');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao enviar requisição:', error);
+                showAlert('Erro de conexão: ' + error.message, 'danger');
+            }
+        }
+
+        async function carregarMinhasRequisicoes() {
+            const status = document.getElementById('filtro-status').value;
+            
+            try {
+                const url = '/api/producao/minhas-requisicoes' + (status ? `?status=${status}` : '');
+                const response = await fetch(url);
+                const requisicoes = await response.json();
+                
+                const container = document.getElementById('minhas-requisicoes-lista');
+                
+                if (requisicoes.length === 0) {
+                    container.innerHTML = '<div class="text-center text-muted">Nenhuma requisição encontrada</div>';
+                    return;
+                }
+                
+                container.innerHTML = requisicoes.map(req => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6 class="card-title">
+                                        ${req.produto.codigo} - ${req.produto.nome}
+                                        <span class="badge ${getStatusBadgeClass(req.status)}">${req.status}</span>
+                                    </h6>
+                                    <p class="card-text">
+                                        <strong>Obra:</strong> ${req.obra.numero_obra} - ${req.obra.nome_obra}<br>
+                                        <strong>Quantidade:</strong> ${req.quantidade_solicitada} ${req.produto.unidade_medida || 'unidades'}
+                                        ${req.quantidade_atendida > 0 ? ` (Atendida: ${req.quantidade_atendida})` : ''}
+                                    </p>
+                                    ${req.observacoes ? `<p class="text-muted small">${req.observacoes}</p>` : ''}
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <small class="text-muted">
+                                        ${formatDate(req.data_requisicao)}
+                                    </small>
+                                    ${req.data_atendimento ? `<br><small class="text-success">Atendida em: ${formatDate(req.data_atendimento)}</small>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Erro ao carregar requisições:', error);
+                showAlert('Erro ao carregar requisições', 'danger');
+            }
+        }
+
+        function getStatusBadgeClass(status) {
+            const classes = {
+                'PENDENTE': 'bg-warning',
+                'ATENDIDA': 'bg-success',
+                'PARCIAL': 'bg-info',
+                'CANCELADA': 'bg-danger'
+            };
+            return classes[status] || 'bg-secondary';
+        }
+
+        async function carregarObras() {
+            const status = document.getElementById('filtro-status-obras').value;
+            const busca = document.getElementById('busca-obras').value;
+            
+            try {
+                let url = '/api/obras?';
+                const params = [];
+                
+                if (status) params.push(`status=${status}`);
+                if (busca.trim()) params.push(`busca=${encodeURIComponent(busca.trim())}`);
+                
+                url += params.join('&');
+                
+                const response = await fetch(url);
+                const obras = await response.json();
+                
+                const container = document.getElementById('obras-lista');
+                
+                if (obras.length === 0) {
+                    container.innerHTML = '<div class="text-center text-muted">Nenhuma obra encontrada</div>';
+                    return;
+                }
+                
+                container.innerHTML = obras.map(obra => `
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${obra.numero_obra} - ${obra.nome_obra}</h6>
+                                <span class="badge ${getObraStatusClass(obra.status)}">${obra.status}</span>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="requisitarParaObra('${obra.numero_obra}', '${obra.nome_obra}', ${obra.id})">
+                                <i class="bi bi-plus-circle"></i> Fazer Requisição
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Descrição:</strong> ${obra.descricao || 'N/A'}</p>
+                                    <p class="mb-1"><strong>Período:</strong> ${obra.data_inicio || 'N/A'} até ${obra.data_fim || 'N/A'}</p>
+                                    ${obra.data_entrega ? `<p class="mb-1"><strong>Entregue em:</strong> ${formatDate(obra.data_entrega)}</p>` : ''}
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Produtos Alocados:</strong> ${obra.produtos_alocados.length} item(ns)</p>
+                                    ${obra.produtos_alocados.length > 0 ? 
+                                        `<div class="small">
+                                            <strong>Últimos produtos:</strong>
+                                            <ul class="mb-0">
+                                                ${obra.produtos_alocados.slice(0, 3).map(produto => `
+                                                    <li>${produto.nome} - ${formatarQuantidadeComUnidade(produto.quantidade_alocada, produto.unidade_medida || 'unidade')}</li>
+                                                `).join('')}
+                                                ${obra.produtos_alocados.length > 3 ? `<li><em>+${obra.produtos_alocados.length - 3} outros...</em></li>` : ''}
+                                            </ul>
+                                        </div>`
+                                        : '<small class="text-muted">Nenhum produto alocado ainda</small>'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Erro ao carregar obras:', error);
+                document.getElementById('obras-lista').innerHTML = '<div class="text-center text-danger">Erro ao carregar obras</div>';
+            }
+        }
+
+        function getObraStatusClass(status) {
+            const classes = {
+                'Prevista': 'bg-secondary',
+                'Em Andamento': 'bg-primary',
+                'Pausada': 'bg-warning',
+                'Entregue': 'bg-success'
+            };
+            return classes[status] || 'bg-secondary';
+        }
+
+        function requisitarParaObra(numeroObra, nomeObra, obraId) {
+            // Mudar para a aba de requisição
+            document.getElementById('requisicao-tab').click();
+            
+            // Preencher o campo da obra
+            document.getElementById('obra-requisicao').value = `${numeroObra} - ${nomeObra}`;
+            document.getElementById('obra-id-requisicao').value = obraId;
+            
+            obraSelecionada = { id: obraId, numero_obra: numeroObra, nome_obra: nomeObra };
+            
+            // Focar no campo de produto
+            setTimeout(() => {
+                document.getElementById('produto-requisicao').focus();
+            }, 500);
+        }
+
+        function formatarQuantidadeComUnidade(quantidade, unidade) {
+            const sufixos = {
+                'unidade': 'unidade(s)',
+                'kilo': 'Kg',
+                'pacote': 'pacote(s)',
+                'metros': 'm',
+                'cento': 'cento(s)'
+            };
+            
+            const sufixo = sufixos[unidade] || 'unidade(s)';
+            
+            if (unidade === 'unidade' || unidade === 'pacote') {
+                return `${Math.floor(quantidade)} ${sufixo}`;
+            } else {
+                const valorFormatado = parseFloat(quantidade).toFixed(quantidade % 1 === 0 ? 0 : 3);
+                return `${valorFormatado} ${sufixo}`;
+            }
+        }
+
+        // Função para mostrar alertas
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+
+            // Auto-remover após 5 segundos
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Função para formatar moeda
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+
+        // Função para formatar data
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function configurarAlterarSenha() {
+            const form = document.getElementById('formAlterarSenha');
+            const modal = document.getElementById('modalAlterarSenha');
+            
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const senhaAtual = document.getElementById('senhaAtual').value;
+                const novaSenha = document.getElementById('novaSenha').value;
+                const confirmarSenha = document.getElementById('confirmarSenha').value;
+                
+                // Validar se as senhas coincidem
+                if (novaSenha !== confirmarSenha) {
+                    showAlert('As senhas não coincidem', 'warning');
+                    return;
+                }
+                
+                // Validar tamanho mínimo
+                if (novaSenha.length < 6) {
+                    showAlert('A senha deve ter pelo menos 6 caracteres', 'warning');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/user/alterar-senha', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            senha_atual: senhaAtual,
+                            nova_senha: novaSenha
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        showAlert('Senha alterada com sucesso!', 'success');
+                        form.reset();
+                        bootstrap.Modal.getInstance(modal).hide();
+                    } else {
+                        showAlert(result.error || 'Erro ao alterar senha', 'danger');
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro ao alterar senha:', error);
+                    showAlert('Erro de conexão: ' + error.message, 'danger');
+                }
+            });
+            
+            // Limpar formulário quando modal for fechado
+            modal.addEventListener('hidden.bs.modal', function() {
+                form.reset();
+            });
+        }
+
+        // Fechar sugestões ao clicar fora
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.position-relative')) {
+                document.getElementById('produto-suggestions').style.display = 'none';
+                document.getElementById('obra-suggestions').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

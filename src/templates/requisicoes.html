@@ -1,0 +1,453 @@
+
+{% extends "base.html" %}
+
+{% block title %}Requisições da Produção{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 text-center mb-4">
+            <i class="bi bi-inbox"></i> Requisições da Produção
+        </h1>
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i>
+            Gerencie as requisições enviadas pela equipe de produção
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="stats-number" id="requisicoes-pendentes">0</div>
+            <div class="stats-label">Requisições Pendentes</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <div class="stats-number" id="requisicoes-atendidas">0</div>
+            <div class="stats-label">Atendidas Hoje</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="stats-number" id="requisicoes-parciais">0</div>
+            <div class="stats-label">Canceladas</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="stats-number" id="total-requisicoes">0</div>
+            <div class="stats-label">Total de Requisições</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-3">
+    <div class="col-md-4">
+        <select class="form-select" id="filtro-status">
+            <option value="">Todos os Status</option>
+            <option value="PENDENTE" selected>Pendentes</option>
+            <option value="ATENDIDA">Atendidas</option>
+            <option value="CANCELADA">Canceladas</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <input type="text" class="form-control" id="filtro-produto" placeholder="Filtrar por produto...">
+    </div>
+    <div class="col-md-4">
+        <input type="text" class="form-control" id="filtro-obra" placeholder="Filtrar por obra...">
+    </div>
+</div></div>
+
+<!-- Lista de Requisições -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-list"></i> Lista de Requisições</h5>
+    </div>
+    <div class="card-body">
+        <div id="requisicoes-lista">
+            <div class="text-center">Carregando...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Atender Requisição -->
+<div class="modal fade" id="modalAtender" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Atender Requisição</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="info-requisicao" class="mb-3"></div>
+                <form id="form-atender">
+                    <div class="mb-3">
+                        <label for="quantidade-atender" class="form-label">Quantidade a Atender</label>
+                        <input type="number" class="form-control" id="quantidade-atender" min="0.1" step="0.1" required>
+                        <small class="text-muted">Estoque disponível: <span id="estoque-disponivel-modal">0</span></small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="obs-atendimento" class="form-label">Observações do Atendimento</label>
+                        <textarea class="form-control" id="obs-atendimento" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="confirmarAtendimento()">
+                    <i class="bi bi-check-circle"></i> Atender
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Cancelar Requisição -->
+<div class="modal fade" id="modalCancelar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancelar Requisição</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="info-cancelamento" class="mb-3"></div>
+                <div class="mb-3">
+                    <label for="motivo-cancelamento" class="form-label">Motivo do Cancelamento</label>
+                    <textarea class="form-control" id="motivo-cancelamento" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarCancelamento()">
+                    <i class="bi bi-x-circle"></i> Cancelar Requisição
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let requisicaoAtual = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarEstatisticas();
+    carregarRequisicoes();
+    
+    // Event listeners para filtros
+    document.getElementById('filtro-status').addEventListener('change', carregarRequisicoes);
+    document.getElementById('filtro-produto').addEventListener('input', debounce(carregarRequisicoes, 500));
+    document.getElementById('filtro-obra').addEventListener('input', debounce(carregarRequisicoes, 500));
+});
+
+async function carregarEstatisticas() {
+    try {
+        // Por enquanto, calcular a partir das requisições carregadas
+        // Em uma implementação futura, pode ser uma API específica
+        carregarRequisicoes(); // Isso também atualizará as estatísticas
+        
+    } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+    }
+}
+
+async function carregarRequisicoes() {
+    try {
+        const status = document.getElementById('filtro-status').value;
+        const produto = document.getElementById('filtro-produto').value.trim();
+        const obra = document.getElementById('filtro-obra').value.trim();
+        
+        let url = '/api/almoxarifado/requisicoes';
+        const params = new URLSearchParams();
+        
+        if (status) params.append('status', status);
+        if (produto) params.append('produto', produto);
+        if (obra) params.append('obra', obra);
+        
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+        
+        const response = await fetch(url);
+        const requisicoes = await response.json();
+        
+        // Atualizar estatísticas
+        atualizarEstatisticas(requisicoes);
+        
+        const container = document.getElementById('requisicoes-lista');
+        
+        if (requisicoes.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted">Nenhuma requisição encontrada</div>';
+            return;
+        }
+        
+        container.innerHTML = requisicoes.map(req => `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">
+                                    REQ #${req.id} - ${req.produto.codigo} - ${req.produto.nome}
+                                </h6>
+                                <span class="badge ${getStatusBadgeClass(req.status)}">${req.status}</span>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1">
+                                        <strong>Obra:</strong> ${req.obra.numero_obra} - ${req.obra.nome_obra}<br>
+                                        <strong>Solicitante:</strong> ${req.usuario_nome}<br>
+                                        <strong>Quantidade:</strong> ${req.quantidade_solicitada} ${req.produto.unidade_medida || 'unidades'}
+                                        ${req.quantidade_atendida > 0 ? `<br><strong>Atendida:</strong> ${req.quantidade_atendida} ${req.produto.unidade_medida || 'unidades'}` : ''}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1">
+                                        <strong>Estoque Atual:</strong> ${formatarQuantidadeComUnidade(req.produto.quantidade_estoque, req.produto.unidade_medida)}<br>
+                                        <strong>Data:</strong> ${formatDate(req.data_requisicao)}
+                                        ${req.data_atendimento ? `<br><strong>Atendida em:</strong> ${formatDate(req.data_atendimento)}` : ''}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            ${req.observacoes ? `<p class="text-muted small mb-2"><strong>Obs:</strong> ${req.observacoes}</p>` : ''}
+                            ${req.observacoes_atendimento ? `<p class="text-success small mb-0"><strong>Atendimento:</strong> ${req.observacoes_atendimento}</p>` : ''}
+                        </div>
+                        
+                        <div class="col-md-4 text-end">
+                            ${req.status === 'PENDENTE' ? `
+                                <button class="btn btn-success btn-sm me-2" onclick="abrirModalAtender(${req.id})">
+                                    <i class="bi bi-check-circle"></i> Atender
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="abrirModalCancelar(${req.id})">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </button>
+                            ` : ''}
+                            ${req.status === 'PARCIAL' ? `
+                                <button class="btn btn-warning btn-sm" onclick="abrirModalAtender(${req.id})">
+                                    <i class="bi bi-plus-circle"></i> Completar
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Erro ao carregar requisições:', error);
+        showAlert('Erro ao carregar requisições', 'danger');
+    }
+}
+
+function atualizarEstatisticas(requisicoes) {
+    const hoje = new Date().toISOString().split('T')[0];
+    
+    const stats = {
+        pendentes: requisicoes.filter(r => r.status === 'PENDENTE').length,
+        atendidas_hoje: requisicoes.filter(r => r.status === 'ATENDIDA' && r.data_atendimento && r.data_atendimento.startsWith(hoje)).length,
+        canceladas: requisicoes.filter(r => r.status === 'CANCELADA').length,
+        total: requisicoes.length
+    };
+    
+    document.getElementById('requisicoes-pendentes').textContent = stats.pendentes;
+    document.getElementById('requisicoes-atendidas').textContent = stats.atendidas_hoje;
+    document.getElementById('requisicoes-parciais').textContent = stats.canceladas;
+    document.getElementById('total-requisicoes').textContent = stats.total;
+}
+
+async function abrirModalAtender(requisicaoId) {
+    try {
+        // Buscar dados atualizados da requisição
+        const response = await fetch(`/api/almoxarifado/requisicoes?status=`);
+        const requisicoes = await response.json();
+        const requisicao = requisicoes.find(r => r.id === requisicaoId);
+        
+        if (!requisicao) {
+            showAlert('Requisição não encontrada', 'danger');
+            return;
+        }
+        
+        requisicaoAtual = requisicao;
+        
+        const quantidadeRestante = requisicao.quantidade_solicitada - requisicao.quantidade_atendida;
+        
+        document.getElementById('info-requisicao').innerHTML = `
+            <div class="alert alert-info">
+                <strong>Produto:</strong> ${requisicao.produto.codigo} - ${requisicao.produto.nome}<br>
+                <strong>Obra:</strong> ${requisicao.obra.numero_obra} - ${requisicao.obra.nome_obra}<br>
+                <strong>Quantidade Solicitada:</strong> ${requisicao.quantidade_solicitada} ${requisicao.produto.unidade_medida}<br>
+                <strong>Quantidade Atendida:</strong> ${quantidadeRestante} ${requisicao.produto.unidade_medida}
+            </div>
+        `;
+        
+        document.getElementById('quantidade-atender').value = quantidadeRestante;
+        document.getElementById('quantidade-atender').max = Math.min(quantidadeRestante, requisicao.produto.quantidade_estoque);
+        document.getElementById('estoque-disponivel-modal').textContent = formatarQuantidadeComUnidade(requisicao.produto.quantidade_estoque, requisicao.produto.unidade_medida);
+        
+        new bootstrap.Modal(document.getElementById('modalAtender')).show();
+        
+    } catch (error) {
+        console.error('Erro ao abrir modal de atendimento:', error);
+        showAlert('Erro ao carregar dados da requisição', 'danger');
+    }
+}
+
+async function confirmarAtendimento() {
+    if (!requisicaoAtual) return;
+    
+    const quantidade = parseFloat(document.getElementById('quantidade-atender').value);
+    const observacoes = document.getElementById('obs-atendimento').value;
+    
+    if (!quantidade || quantidade <= 0) {
+        showAlert('Informe uma quantidade válida', 'warning');
+        return;
+    }
+    
+    if (quantidade > requisicaoAtual.produto.quantidade_estoque) {
+        showAlert('Quantidade maior que o estoque disponível', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/almoxarifado/requisicoes/${requisicaoAtual.id}/atender`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                quantidade_atendida: quantidade,
+                observacoes_atendimento: observacoes
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('Requisição atendida com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalAtender')).hide();
+            carregarRequisicoes();
+        } else {
+            showAlert('Erro: ' + result.error, 'danger');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao atender requisição:', error);
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+async function abrirModalCancelar(requisicaoId) {
+    try {
+        const response = await fetch(`/api/almoxarifado/requisicoes?status=`);
+        const requisicoes = await response.json();
+        const requisicao = requisicoes.find(r => r.id === requisicaoId);
+        
+        if (!requisicao) {
+            showAlert('Requisição não encontrada', 'danger');
+            return;
+        }
+        
+        requisicaoAtual = requisicao;
+        
+        document.getElementById('info-cancelamento').innerHTML = `
+            <div class="alert alert-warning">
+                <strong>Produto:</strong> ${requisicao.produto.codigo} - ${requisicao.produto.nome}<br>
+                <strong>Obra:</strong> ${requisicao.obra.numero_obra} - ${requisicao.obra.nome_obra}<br>
+                <strong>Solicitante:</strong> ${requisicao.usuario_nome}<br>
+                <strong>Quantidade:</strong> ${requisicao.quantidade_solicitada} ${requisicao.produto.unidade_medida}
+            </div>
+        `;
+        
+        document.getElementById('motivo-cancelamento').value = '';
+        
+        new bootstrap.Modal(document.getElementById('modalCancelar')).show();
+        
+    } catch (error) {
+        console.error('Erro ao abrir modal de cancelamento:', error);
+        showAlert('Erro ao carregar dados da requisição', 'danger');
+    }
+}
+
+async function confirmarCancelamento() {
+    if (!requisicaoAtual) return;
+    
+    const motivo = document.getElementById('motivo-cancelamento').value.trim();
+    
+    if (!motivo) {
+        showAlert('Informe o motivo do cancelamento', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/almoxarifado/requisicoes/${requisicaoAtual.id}/cancelar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                motivo_cancelamento: motivo
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('Requisição cancelada com sucesso!', 'info');
+            bootstrap.Modal.getInstance(document.getElementById('modalCancelar')).hide();
+            carregarRequisicoes();
+        } else {
+            showAlert('Erro: ' + result.error, 'danger');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao cancelar requisição:', error);
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function getStatusBadgeClass(status) {
+    const classes = {
+        'PENDENTE': 'bg-warning text-dark',
+        'ATENDIDA': 'bg-success',
+        'PARCIAL': 'bg-info',
+        'CANCELADA': 'bg-danger'
+    };
+    return classes[status] || 'bg-secondary';
+}
+
+function formatarQuantidadeComUnidade(quantidade, unidade) {
+    const sufixos = {
+        'unidade': 'unidade(s)',
+        'kilo': 'Kg',
+        'pacote': 'pacote(s)',
+        'metros': 'm',
+        'cento': 'cento(s)'
+    };
+    
+    const sufixo = sufixos[unidade] || 'unidade(s)';
+    
+    if (unidade === 'unidade' || unidade === 'pacote') {
+        return `${Math.floor(quantidade)} ${sufixo}`;
+    } else {
+        const valorFormatado = parseFloat(quantidade).toFixed(quantidade % 1 === 0 ? 0 : 3);
+        return `${valorFormatado} ${sufixo}`;
+    }
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+</script>
+{% endblock %}

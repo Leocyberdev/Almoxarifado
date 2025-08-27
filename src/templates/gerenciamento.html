@@ -1,0 +1,633 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciamento - Sistema de Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-5 text-center mb-4">
+            <i class="bi bi-gear"></i> Gerenciamento de Produtos
+        </h1>
+        <div class="alert alert-warning text-center">
+            <i class="bi bi-shield-lock"></i>
+            <strong>Área Restrita:</strong> Todas as operações requerem senha de administrador
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Menu de Operações -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-task"></i> Operações Disponíveis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="mostrarOperacao('editar')">
+                        <i class="bi bi-pencil-square"></i> Editar Produto
+                    </button>
+                    <button class="btn btn-danger" onclick="mostrarOperacao('excluir')">
+                        <i class="bi bi-trash"></i> Excluir Produto
+                    </button>
+                    <button class="btn btn-success" onclick="mostrarOperacao('adicionar')">
+                        <i class="bi bi-plus-circle"></i> Adicionar Saldo
+                    </button>
+                    <button class="btn btn-warning" onclick="mostrarOperacao('retirar')">
+                        <i class="bi bi-dash-circle"></i> Retirar Saldo
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informações de Segurança -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Informações de Segurança
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="bi bi-check-circle text-success"></i> Senha: <code>Monter</code></li>
+                    <li><i class="bi bi-check-circle text-success"></i> Todas as operações são registradas</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Backup automático dos dados</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Área de Trabalho -->
+    <div class="col-lg-8">
+        <!-- Mensagem Inicial -->
+        <div id="mensagem-inicial" class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-arrow-left display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">Selecione uma operação</h4>
+                <p class="text-muted">Escolha uma das operações disponíveis no menu ao lado</p>
+            </div>
+        </div>
+        
+        <!-- Editar Produto -->
+        <div id="operacao-editar" class="card" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square"></i> Editar Produto
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="form-editar">
+                    <!-- Busca de Produto -->
+                    <div class="mb-3">
+                        <label for="busca-editar" class="form-label">Buscar Produto</label>
+                        <div class="search-container">
+                            <input type="text" class="form-control" id="busca-editar" 
+                                   placeholder="Digite código ou nome do produto">
+                            <div class="search-results" id="search-results-editar"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulário de Edição -->
+                    <div id="form-edicao" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-codigo" class="form-label">Código</label>
+                                <input type="text" class="form-control" id="edit-codigo" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-categoria" class="form-label">Categoria</label>
+                                <select class="form-select" id="edit-categoria">
+                                    <option value="Curva A">Curva A</option>
+                                    <option value="Curva B">Curva B</option>
+                                    <option value="Curva C">Curva C</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-nome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="edit-nome">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-descricao" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="edit-descricao" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-fornecedor" class="form-label">Fornecedor</label>
+                                <input type="text" class="form-control" id="edit-fornecedor">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-local" class="form-label">Local</label>
+                                <input type="text" class="form-control" id="edit-local">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-preco" class="form-label">Preço (R$)</label>
+                            <input type="number" class="form-control" id="edit-preco" step="0.01">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="senha-editar" class="form-label">Senha de Administrador</label>
+                            <input type="password" class="form-control" id="senha-editar" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Excluir Produto -->
+        <div id="operacao-excluir" class="card" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-trash"></i> Excluir Produto
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Atenção:</strong> Esta operação irá desativar o produto permanentemente.
+                </div>
+                
+                <form id="form-excluir">
+                    <div class="mb-3">
+                        <label for="busca-excluir" class="form-label">Buscar Produto</label>
+                        <div class="search-container">
+                            <input type="text" class="form-control" id="busca-excluir" 
+                                   placeholder="Digite código ou nome do produto">
+                            <div class="search-results" id="search-results-excluir"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="produto-excluir" style="display: none;">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6>Produto Selecionado:</h6>
+                                <div id="info-produto-excluir"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="senha-excluir" class="form-label">Senha de Administrador</label>
+                            <input type="password" class="form-control" id="senha-excluir" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Confirmar Exclusão
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Adicionar Saldo -->
+        <div id="operacao-adicionar" class="card" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> Adicionar Saldo
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="form-adicionar">
+                    <div class="mb-3">
+                        <label for="busca-adicionar" class="form-label">Buscar Produto</label>
+                        <div class="search-container">
+                            <input type="text" class="form-control" id="busca-adicionar" 
+                                   placeholder="Digite código ou nome do produto">
+                            <div class="search-results" id="search-results-adicionar"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="saldo-adicionar" style="display: none;">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6>Produto Selecionado:</h6>
+                                <div id="info-produto-adicionar"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="quantidade-adicionar" class="form-label">Quantidade a Adicionar</label>
+                                <input type="number" class="form-control" id="quantidade-adicionar" min="1" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="senha-adicionar" class="form-label">Senha de Administrador</label>
+                                <input type="password" class="form-control" id="senha-adicionar" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Adicionar Saldo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Retirar Saldo -->
+        <div id="operacao-retirar" class="card" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-dash-circle"></i> Retirar Saldo
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="form-retirar">
+                    <div class="mb-3">
+                        <label for="busca-retirar" class="form-label">Buscar Produto</label>
+                        <div class="search-container">
+                            <input type="text" class="form-control" id="busca-retirar" 
+                                   placeholder="Digite código ou nome do produto">
+                            <div class="search-results" id="search-results-retirar"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="saldo-retirar" style="display: none;">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6>Produto Selecionado:</h6>
+                                <div id="info-produto-retirar"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="quantidade-retirar" class="form-label">Quantidade a Retirar</label>
+                                <input type="number" class="form-control" id="quantidade-retirar" min="1" required>
+                                <div class="form-text">Máximo disponível: <span id="max-retirar">0</span></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="senha-retirar" class="form-label">Senha de Administrador</label>
+                                <input type="password" class="form-control" id="senha-retirar" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-dash-circle"></i> Retirar Saldo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let produtosSelecionados = {
+    editar: null,
+    excluir: null,
+    adicionar: null,
+    retirar: null
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    configurarFormularios();
+    configurarBuscas();
+});
+
+function mostrarOperacao(operacao) {
+    // Esconder todas as operações
+    document.getElementById('mensagem-inicial').style.display = 'none';
+    document.getElementById('operacao-editar').style.display = 'none';
+    document.getElementById('operacao-excluir').style.display = 'none';
+    document.getElementById('operacao-adicionar').style.display = 'none';
+    document.getElementById('operacao-retirar').style.display = 'none';
+    
+    // Mostrar operação selecionada
+    document.getElementById(`operacao-${operacao}`).style.display = 'block';
+    
+    // Focar no campo de busca
+    document.getElementById(`busca-${operacao}`).focus();
+}
+
+function configurarBuscas() {
+    const operacoes = ['editar', 'excluir', 'adicionar', 'retirar'];
+    
+    operacoes.forEach(operacao => {
+        const input = document.getElementById(`busca-${operacao}`);
+        const results = document.getElementById(`search-results-${operacao}`);
+        
+        input.addEventListener('input', async function() {
+            const termo = this.value.trim();
+            
+            if (termo.length < 2) {
+                results.style.display = 'none';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/busca/produtos?q=${encodeURIComponent(termo)}`);
+                const produtos = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultadosBusca(produtos, operacao);
+                }
+            } catch (error) {
+                console.error('Erro na busca:', error);
+            }
+        });
+        
+        // Fechar resultados ao clicar fora
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !results.contains(e.target)) {
+                results.style.display = 'none';
+            }
+        });
+    });
+}
+
+function mostrarResultadosBusca(produtos, operacao) {
+    const results = document.getElementById(`search-results-${operacao}`);
+    results.innerHTML = '';
+    
+    if (produtos.length === 0) {
+        results.innerHTML = '<div class="search-item">Nenhum produto encontrado</div>';
+    } else {
+        produtos.forEach(produto => {
+            const item = document.createElement('div');
+            item.className = 'search-item';
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${produto.codigo}</strong> - ${produto.nome}<br>
+                        <small class="text-muted">Estoque: ${produto.estoque} | Preço: ${formatCurrency(produto.preco)}</small>
+                    </div>
+                </div>
+            `;
+            
+            item.onclick = function() {
+                selecionarProduto(produto, operacao);
+                document.getElementById(`busca-${operacao}`).value = produto.codigo;
+                results.style.display = 'none';
+            };
+            
+            results.appendChild(item);
+        });
+    }
+    
+    results.style.display = 'block';
+}
+
+async function selecionarProduto(produto, operacao) {
+    // Buscar dados completos do produto
+    try {
+        const response = await fetch(`/api/produtos?busca=${produto.codigo}`);
+        const produtos = await response.json();
+        
+        if (response.ok && produtos.length > 0) {
+            const produtoCompleto = produtos[0];
+            produtosSelecionados[operacao] = produtoCompleto;
+            
+            switch (operacao) {
+                case 'editar':
+                    preencherFormularioEdicao(produtoCompleto);
+                    break;
+                case 'excluir':
+                    mostrarInfoProdutoExcluir(produtoCompleto);
+                    break;
+                case 'adicionar':
+                    mostrarInfoProdutoAdicionar(produtoCompleto);
+                    break;
+                case 'retirar':
+                    mostrarInfoProdutoRetirar(produtoCompleto);
+                    break;
+            }
+        }
+    } catch (error) {
+        showAlert('Erro ao carregar dados do produto: ' + error.message, 'danger');
+    }
+}
+
+function preencherFormularioEdicao(produto) {
+    document.getElementById('edit-codigo').value = produto.codigo;
+    document.getElementById('edit-nome').value = produto.nome;
+    document.getElementById('edit-descricao').value = produto.descricao || '';
+    document.getElementById('edit-categoria').value = produto.categoria;
+    document.getElementById('edit-fornecedor').value = produto.fornecedor || '';
+    document.getElementById('edit-local').value = produto.local_produto || '';
+    document.getElementById('edit-preco').value = produto.preco;
+    
+    document.getElementById('form-edicao').style.display = 'block';
+}
+
+function mostrarInfoProdutoExcluir(produto) {
+    const info = document.getElementById('info-produto-excluir');
+    info.innerHTML = `
+        <strong>${produto.codigo}</strong> - ${produto.nome}<br>
+        <small class="text-muted">
+            Categoria: ${produto.categoria} | 
+            Estoque: ${produto.quantidade_estoque} | 
+            Preço: ${formatCurrency(produto.preco)}
+        </small>
+    `;
+    
+    document.getElementById('produto-excluir').style.display = 'block';
+}
+
+function mostrarInfoProdutoAdicionar(produto) {
+    const info = document.getElementById('info-produto-adicionar');
+    info.innerHTML = `
+        <strong>${produto.codigo}</strong> - ${produto.nome}<br>
+        <small class="text-muted">
+            Estoque atual: ${produto.quantidade_estoque} | 
+            Preço: ${formatCurrency(produto.preco)}
+        </small>
+    `;
+    
+    document.getElementById('saldo-adicionar').style.display = 'block';
+}
+
+function mostrarInfoProdutoRetirar(produto) {
+    const info = document.getElementById('info-produto-retirar');
+    info.innerHTML = `
+        <strong>${produto.codigo}</strong> - ${produto.nome}<br>
+        <small class="text-muted">
+            Estoque atual: ${produto.quantidade_estoque} | 
+            Preço: ${formatCurrency(produto.preco)}
+        </small>
+    `;
+    
+    document.getElementById('max-retirar').textContent = produto.quantidade_estoque;
+    document.getElementById('quantidade-retirar').max = produto.quantidade_estoque;
+    
+    document.getElementById('saldo-retirar').style.display = 'block';
+}
+
+function configurarFormularios() {
+    // Formulário de edição
+    document.getElementById('form-editar').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const produto = produtosSelecionados.editar;
+        if (!produto) return;
+        
+        const dados = {
+            nome: document.getElementById('edit-nome').value,
+            descricao: document.getElementById('edit-descricao').value,
+            categoria: document.getElementById('edit-categoria').value,
+            fornecedor: document.getElementById('edit-fornecedor').value,
+            local_produto: document.getElementById('edit-local').value,
+            preco: parseFloat(document.getElementById('edit-preco').value),
+            senha: document.getElementById('senha-editar').value
+        };
+        
+        try {
+            const response = await fetch(`/api/produtos/${produto.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert('Produto editado com sucesso!', 'success');
+                limparFormulario('editar');
+            } else {
+                showAlert('Erro: ' + result.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Erro de conexão: ' + error.message, 'danger');
+        }
+    });
+    
+    // Formulário de exclusão
+    document.getElementById('form-excluir').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const produto = produtosSelecionados.excluir;
+        if (!produto) return;
+        
+        const senha = document.getElementById('senha-excluir').value;
+        
+        try {
+            const response = await fetch(`/api/produtos/${produto.id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ senha: senha })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert('Produto excluído com sucesso!', 'success');
+                limparFormulario('excluir');
+            } else {
+                showAlert('Erro: ' + result.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Erro de conexão: ' + error.message, 'danger');
+        }
+    });
+    
+    // Formulário de adicionar saldo
+    document.getElementById('form-adicionar').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const produto = produtosSelecionados.adicionar;
+        if (!produto) return;
+        
+        const dados = {
+            operacao: 'adicionar',
+            quantidade: parseInt(document.getElementById('quantidade-adicionar').value),
+            senha: document.getElementById('senha-adicionar').value
+        };
+        
+        try {
+            const response = await fetch(`/api/produtos/${produto.id}/saldo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert(`Saldo adicionado com sucesso! Novo estoque: ${result.quantidade_estoque}`, 'success');
+                limparFormulario('adicionar');
+            } else {
+                showAlert('Erro: ' + result.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Erro de conexão: ' + error.message, 'danger');
+        }
+    });
+    
+    // Formulário de retirar saldo
+    document.getElementById('form-retirar').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const produto = produtosSelecionados.retirar;
+        if (!produto) return;
+        
+        const quantidade = parseInt(document.getElementById('quantidade-retirar').value);
+        
+        if (quantidade > produto.quantidade_estoque) {
+            showAlert('Quantidade maior que o estoque disponível', 'warning');
+            return;
+        }
+        
+        const dados = {
+            operacao: 'retirar',
+            quantidade: quantidade,
+            senha: document.getElementById('senha-retirar').value
+        };
+        
+        try {
+            const response = await fetch(`/api/produtos/${produto.id}/saldo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert(`Saldo retirado com sucesso! Novo estoque: ${result.quantidade_estoque}`, 'success');
+                limparFormulario('retirar');
+            } else {
+                showAlert('Erro: ' + result.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Erro de conexão: ' + error.message, 'danger');
+        }
+    });
+}
+
+function limparFormulario(operacao) {
+    document.getElementById(`form-${operacao}`).reset();
+    document.getElementById(`busca-${operacao}`).value = '';
+    document.getElementById(`search-results-${operacao}`).style.display = 'none';
+    produtosSelecionados[operacao] = null;
+    
+    // Esconder seções específicas
+    switch (operacao) {
+        case 'editar':
+            document.getElementById('form-edicao').style.display = 'none';
+            break;
+        case 'excluir':
+            document.getElementById('produto-excluir').style.display = 'none';
+            break;
+        case 'adicionar':
+            document.getElementById('saldo-adicionar').style.display = 'none';
+            break;
+        case 'retirar':
+            document.getElementById('saldo-retirar').style.display = 'none';
+            break;
+    }
+}
+</script>
+{% endblock %}
+

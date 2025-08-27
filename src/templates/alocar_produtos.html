@@ -1,0 +1,1188 @@
+{% extends "base.html" %}
+
+{% block title %}Alocar Produtos - Sistema de Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-5 text-center mb-4">
+            <i class="bi bi-arrow-right-circle"></i> Alocação de Produtos
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Formulário de Alocação -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-arrow-right"></i> Formulário de Alocação
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="form-alocacao">
+                    <!-- Busca de Produto -->
+                    <div class="mb-4">
+                        <label for="busca-produto" class="form-label">
+                            <i class="bi bi-search"></i> Buscar Produto *
+                        </label>
+                        <div class="search-container">
+                            <input type="text" class="form-control" id="busca-produto" 
+                                   placeholder="Digite código ou nome do produto" required>
+                            <div class="search-results" id="search-results"></div>
+                        </div>
+                        <div class="form-text">Digite pelo menos 2 caracteres para buscar</div>
+                    </div>
+
+                    <!-- Informações do Produto Selecionado -->
+                    <div id="produto-selecionado" style="display: none;">
+                        <div class="card bg-light mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-check-circle text-success"></i> Produto Selecionado
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td><strong>Código:</strong></td>
+                                                <td id="produto-codigo">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Nome:</strong></td>
+                                                <td id="produto-nome">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Categoria:</strong></td>
+                                                <td id="produto-categoria">-</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td><strong>Local:</strong></td>
+                                                <td id="produto-local">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Estoque Disponível:</strong></td>
+                                                <td>
+                                                    <span class="badge bg-info" id="produto-estoque">0</span>
+                                                    <span id="produto-unidade-estoque" class="text-muted ms-1"></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Preço Unitário:</strong></td>
+                                                <td id="produto-preco">R$ 0,00</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Unidade de Medida:</strong></td>
+                                                <td>
+                                                    <span class="badge bg-secondary" id="produto-unidade">-</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dados da Alocação -->
+                    <div id="dados-alocacao" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="obra-select" class="form-label">
+                                    <i class="bi bi-building"></i> Obra de Destino *
+                                </label>
+                                <select class="form-select" id="obra-select" required>
+                                    <option value="">Selecione a obra</option>
+                                </select>
+                            </div>
+
+<<<<<<< HEAD
+                            <div class="col-md-6 mb-3">
+                                <label for="funcionario-select" class="form-label">
+                                    <i class="bi bi-person"></i> Funcionário Responsável *
+                                </label>
+                                <select class="form-select" id="funcionario-select" required>
+                                    <option value="">Selecione o funcionário</option>
+                                </select>
+=======
+                            <!-- Funcionário Responsável -->
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-person-check"></i> Funcionário Responsável
+                                </label>
+                                <div class="form-control-plaintext bg-light border rounded p-2">
+                                    <i class="bi bi-person-fill text-primary"></i> 
+                                    <span id="funcionario-logado">Carregando...</span>
+                                </div>
+                                <div class="form-text">Usuário atualmente logado no sistema</div>
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="quantidade" class="form-label">
+                                    <i class="bi bi-123"></i> Quantidade a Alocar *
+                                    <span id="label-unidade-quantidade" class="text-muted">(em unidades)</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="quantidade" 
+                                           min="0" step="1" required>
+                                    <span class="input-group-text" id="sufixo-unidade">un</span>
+                                </div>
+                                <div class="form-text">
+                                    Máximo disponível: <span id="max-quantidade">0</span>
+                                    <span id="max-unidade" class="text-muted">un</span>
+                                </div>
+<<<<<<< HEAD
+                            </div></div>
+=======
+                            </div>
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+
+                            <div class="col-md-6 mb-3">
+                                <label for="valor-total" class="form-label">
+                                    <i class="bi bi-currency-dollar"></i> Valor Total
+                                </label>
+                                <input type="text" class="form-control" id="valor-total" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="observacoes" class="form-label">
+                                <i class="bi bi-chat-text"></i> Observações
+                            </label>
+                            <textarea class="form-control" id="observacoes" rows="3" 
+                                      placeholder="Observações sobre a alocação (opcional)"></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-secondary me-md-2" onclick="limparFormulario()">
+                                <i class="bi bi-arrow-clockwise"></i> Limpar
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Confirmar Alocação
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo e Histórico -->
+    <div class="col-lg-4">
+        <!-- Resumo da Alocação -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-clipboard-check"></i> Resumo da Alocação
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="resumo-alocacao">
+                    <p class="text-muted text-center">Selecione um produto para ver o resumo</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Últimas Alocações -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Últimas Alocações
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="ultimas-alocacoes">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="modalConfirmacao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning"></i> Confirmar Alocação
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modal-confirmacao-body">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="confirmarAlocacao()">
+                    <i class="bi bi-check-circle"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-container {
+    position: relative;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+}
+
+.search-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    background: white;
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+}
+
+.search-item:hover,
+.search-item.selected {
+    background-color: #e3f2fd !important;
+    transform: translateX(2px);
+}
+
+.search-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 8px 8px;
+}
+
+.search-item.text-muted,
+.search-item.text-danger {
+    cursor: default;
+    background-color: #f8f9fa !important;
+    transform: none !important;
+}
+
+.search-item.text-muted:hover,
+.search-item.text-danger:hover {
+    background-color: #f8f9fa !important;
+    transform: none !important;
+}
+
+.search-results::-webkit-scrollbar {
+    width: 6px;
+}
+
+.search-results::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Melhorar o input de busca */
+#busca-produto:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Indicador de busca ativa */
+.search-container.searching::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0d6efd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let produtoSelecionado = null;
+let obras = [];
+<<<<<<< HEAD
+let funcionarios = [];
+=======
+let funcionarios = []; // Manter para referência, mas não usado para seleção
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarObras();
+    carregarFuncionarios();
+    carregarUltimasAlocacoes();
+    configurarBuscaInteligente();
+    configurarFormulario();
+
+    // Verificar se há produto pré-selecionado na URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const produtoId = urlParams.get('produto');
+    if (produtoId) {
+        carregarProdutoPorId(produtoId);
+    }
+});
+
+async function carregarObras() {
+    try {
+        const response = await fetch('/api/obras?para_alocacao=true');
+        const data = await response.json();
+
+        if (response.ok) {
+            obras = data;
+            const select = document.getElementById('obra-select');
+            select.innerHTML = '<option value="">Selecione a obra</option>';
+
+            obras.forEach(obra => {
+                const option = document.createElement('option');
+                option.value = obra.id;
+                option.textContent = `${obra.numero_obra} - ${obra.nome_obra}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        showAlert('Erro ao carregar obras: ' + error.message, 'danger');
+    }
+}
+
+async function carregarFuncionarios() {
+    try {
+<<<<<<< HEAD
+        // Carregar usuário logado primeiro
+        const userResponse = await fetch('/api/usuario-logado');
+        const userData = await userResponse.json();
+
+        // Carregar funcionários cadastrados
+        const response = await fetch('/api/funcionarios');
+        const data = await response.json();
+
+        const select = document.getElementById('funcionario-select');
+        select.innerHTML = '';
+
+        // SEMPRE adicionar usuário logado como primeira opção e pré-selecioná-lo
+        if (userResponse.ok && userData.username) {
+            const usuarioLogadoOption = document.createElement('option');
+            usuarioLogadoOption.value = `user_${userData.id}`;
+            usuarioLogadoOption.textContent = `${userData.username} (Usuário Logado)`;
+            usuarioLogadoOption.selected = true; // Pré-selecionar sempre
+            select.appendChild(usuarioLogadoOption);
+        }
+
+        // Adicionar funcionários cadastrados como opções adicionais
+        if (response.ok && data.length > 0) {
+            funcionarios = data;
+
+            // Adicionar separador visual
+            const separatorOption = document.createElement('option');
+            separatorOption.disabled = true;
+            separatorOption.textContent = '── Funcionários Cadastrados ──';
+            select.appendChild(separatorOption);
+
+            funcionarios.forEach(funcionario => {
+                const option = document.createElement('option');
+                option.value = funcionario.id;
+                option.textContent = `${funcionario.nome} - ${funcionario.cargo || 'Sem cargo'}`;
+                select.appendChild(option);
+            });
+        } else {
+            // Se não houver funcionários cadastrados, só mostrar o usuário logado
+            funcionarios = [];
+        }
+
+        // Atualizar resumo já com o usuário selecionado
+        atualizarResumo();
+
+    } catch (error) {
+        console.error('Erro ao carregar funcionários:', error);
+        showAlert('Erro ao carregar funcionários: ' + error.message, 'danger');
+
+        // Em caso de erro, pelo menos tentar carregar um funcionário padrão
+        const select = document.getElementById('funcionario-select');
+        select.innerHTML = '<option value="user_1" selected>Usuário do Sistema</option>';
+=======
+        // Carregar apenas usuário logado
+        const userResponse = await fetch('/api/usuario-logado');
+        const userData = await userResponse.json();
+
+        if (userResponse.ok) {
+            const funcionarioElement = document.getElementById('funcionario-logado');
+            funcionarioElement.textContent = `${userData.username} (Usuário Logado)`;
+        } else {
+            document.getElementById('funcionario-logado').textContent = 'Erro ao carregar usuário';
+        }
+    } catch (error) {
+        document.getElementById('funcionario-logado').textContent = 'Erro ao carregar usuário';
+        showAlert('Erro ao carregar informações do usuário: ' + error.message, 'danger');
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+    }
+}
+
+async function carregarProdutoPorId(produtoId) {
+    try {
+        const response = await fetch(`/api/produtos?busca=${produtoId}`);
+        const produtos = await response.json();
+
+        if (response.ok && produtos.length > 0) {
+            const produto = produtos.find(p => p.id == produtoId);
+            if (produto) {
+                selecionarProduto(produto);
+                document.getElementById('busca-produto').value = produto.codigo;
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao carregar produto:', error);
+    }
+}
+
+function configurarBuscaInteligente() {
+    const input = document.getElementById('busca-produto');
+    const results = document.getElementById('search-results');
+    let timeoutId;
+
+    input.addEventListener('input', async function() {
+        const termo = this.value.trim();
+
+        // Limpar timeout anterior
+        clearTimeout(timeoutId);
+
+        if (termo.length < 1) {  // Reduzir para 1 caractere
+            results.style.display = 'none';
+            results.innerHTML = '';
+            return;
+        }
+
+        // Mostrar indicador de carregamento
+        results.innerHTML = '<div class="search-item text-muted"><i class="bi bi-search"></i> Buscando...</div>';
+        results.style.display = 'block';
+
+        // Debounce - aguardar 200ms para melhor responsividade
+        timeoutId = setTimeout(async () => {
+            try {
+                console.log('Buscando produtos com termo:', termo);
+                const response = await fetch(`/api/busca/produtos?q=${encodeURIComponent(termo)}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const produtos = await response.json();
+                console.log('Produtos encontrados:', produtos);
+                mostrarResultadosBusca(produtos);
+            } catch (error) {
+                console.error('Erro na busca:', error);
+                results.innerHTML = '<div class="search-item text-danger"><i class="bi bi-exclamation-triangle"></i> Erro na busca - Tente novamente</div>';
+                results.style.display = 'block';
+            }
+        }, 200);
+    });
+
+    // Navegação com teclado
+    input.addEventListener('keydown', function(e) {
+        const items = results.querySelectorAll('.search-item:not(.text-muted):not(.text-danger)');
+        let currentIndex = Array.from(items).findIndex(item => item.classList.contains('selected'));
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (currentIndex < items.length - 1) {
+                if (currentIndex >= 0) items[currentIndex].classList.remove('selected');
+                items[currentIndex + 1].classList.add('selected');
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (currentIndex > 0) {
+                items[currentIndex].classList.remove('selected');
+                items[currentIndex - 1].classList.add('selected');
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentIndex >= 0) {
+                items[currentIndex].click();
+            }
+        } else if (e.key === 'Escape') {
+            results.style.display = 'none';
+        }
+    });
+
+    // Fechar resultados ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !results.contains(e.target)) {
+            results.style.display = 'none';
+        }
+    });
+
+    // Reabrir resultados ao focar no input se há texto
+    input.addEventListener('focus', function() {
+        if (this.value.trim().length >= 1 && results.children.length > 0) {
+            results.style.display = 'block';
+        }
+    });
+}
+
+function mostrarResultadosBusca(produtos) {
+    const results = document.getElementById('search-results');
+    results.innerHTML = '';
+
+    if (!produtos || produtos.length === 0) {
+        results.innerHTML = '<div class="search-item text-muted"><i class="bi bi-search"></i> Nenhum produto encontrado</div>';
+        results.style.display = 'block';
+        return;
+    }
+
+    // Filtrar apenas produtos ativos (segurança adicional no frontend)
+    const produtosAtivos = produtos.filter(produto => produto.ativo !== false);
+
+    if (produtosAtivos.length === 0) {
+        results.innerHTML = '<div class="search-item text-muted"><i class="bi bi-exclamation-circle"></i> Nenhum produto ativo encontrado</div>';
+        results.style.display = 'block';
+        return;
+    }
+
+    produtosAtivos.forEach((produto, index) => {
+        const item = document.createElement('div');
+        item.className = 'search-item';
+        item.style.cursor = 'pointer';
+        item.style.padding = '12px';
+        item.style.borderBottom = '1px solid #eee';
+        item.style.transition = 'background-color 0.2s ease';
+
+        const estoque = produto.quantidade_estoque || produto.estoque || 0;
+
+        let statusEstoque;
+        let statusClass = '';
+        if (estoque === 0) {
+            statusEstoque = '<span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> Sem estoque</span>';
+            statusClass = 'border-warning';
+        } else if (estoque <= 5) {
+            statusEstoque = `<span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> Estoque baixo: ${estoque}</span>`;
+            statusClass = 'border-warning';
+        } else {
+            statusEstoque = `<span class="badge bg-success"><i class="bi bi-check-circle"></i> Estoque: ${estoque}</span>`;
+            statusClass = 'border-success';
+        }
+
+        item.className += ` ${statusClass}`;
+        item.style.borderLeft = `4px solid ${estoque === 0 ? '#ffc107' : estoque <= 5 ? '#ffc107' : '#198754'}`;
+
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div style="flex: 1; min-width: 0;">
+                    <div class="fw-bold text-primary">${produto.codigo || 'N/A'}</div>
+                    <div class="text-dark mb-1">${produto.nome || 'N/A'}</div>
+                    <small class="text-muted">
+                        <i class="bi bi-tag"></i> ${produto.categoria || 'Sem categoria'} | 
+                        <i class="bi bi-currency-dollar"></i> ${formatCurrency(produto.preco || 0)}
+                        ${produto.local_produto ? ' | <i class="bi bi-geo-alt"></i> ' + produto.local_produto : ''}
+                    </small>
+                </div>
+                <div class="text-end ms-2">
+                    ${statusEstoque}
+                </div>
+            </div>
+        `;
+
+        // Hover effects
+        item.addEventListener('mouseenter', function() {
+            this.classList.add('selected');
+            this.style.backgroundColor = '#e3f2fd';
+            this.style.transform = 'translateX(2px)';
+        });
+
+        item.addEventListener('mouseleave', function() {
+            this.classList.remove('selected');
+            this.style.backgroundColor = 'white';
+            this.style.transform = 'translateX(0)';
+        });
+
+        item.addEventListener('click', function() {
+            console.log('Produto selecionado:', produto);
+            selecionarProduto(produto);
+            document.getElementById('busca-produto').value = `${produto.codigo} - ${produto.nome}`;
+            results.style.display = 'none';
+
+            // Feedback visual
+            showAlert(`Produto "${produto.nome}" selecionado com sucesso!`, 'success');
+        });
+
+        results.appendChild(item);
+    });
+
+    results.style.display = 'block';
+
+    // Auto-selecionar primeiro item se houver apenas um resultado exato
+    if (produtosAtivos.length === 1) {
+        const searchTerm = document.getElementById('busca-produto').value.trim();
+        const produto = produtosAtivos[0];
+        if (produto.codigo && produto.codigo.toLowerCase() === searchTerm.toLowerCase()) {
+            // Se o código digitado é exato, selecionar automaticamente
+            setTimeout(() => {
+                if (results.style.display === 'block') {
+                    results.children[0].click();
+                }
+            }, 500);
+        }
+    }
+}
+
+function selecionarProduto(produto) {
+    console.log('Selecionando produto:', produto);
+    produtoSelecionado = produto;
+
+    // Preencher informações do produto
+    document.getElementById('produto-codigo').textContent = produto.codigo || '-';
+    document.getElementById('produto-nome').textContent = produto.nome || '-';
+    document.getElementById('produto-categoria').textContent = produto.categoria || '-';
+    document.getElementById('produto-local').textContent = produto.local_produto || produto.local || '-';
+
+    const estoque = produto.quantidade_estoque || produto.estoque || 0;
+    const unidadeMedida = produto.unidade_medida || 'unidade';
+    const isAtivo = produto.ativo !== false;
+
+    console.log('Unidade de medida detectada:', unidadeMedida);
+
+    // Configurar exibição da unidade de medida
+    const unidadeFormatada = formatarUnidadeMedida(unidadeMedida);
+
+    document.getElementById('produto-estoque').textContent = estoque;
+    document.getElementById('produto-unidade-estoque').textContent = unidadeFormatada.sufixo;
+    document.getElementById('produto-unidade').textContent = unidadeFormatada.nome;
+    document.getElementById('produto-preco').textContent = formatCurrency(produto.preco || 0);
+
+    // Atualizar labels e campos com a unidade do produto
+    document.getElementById('label-unidade-quantidade').textContent = `(em ${unidadeFormatada.nome})`;
+    document.getElementById('max-unidade').textContent = unidadeFormatada.sufixo;
+    document.getElementById('sufixo-unidade').textContent = unidadeFormatada.sufixo;
+
+    // Configurar quantidade máxima e step baseado na unidade
+    document.getElementById('max-quantidade').textContent = formatarQuantidade(estoque, unidadeMedida);
+    const quantidadeInput = document.getElementById('quantidade');
+    quantidadeInput.max = estoque;
+    quantidadeInput.step = unidadeFormatada.step;
+    quantidadeInput.min = unidadeFormatada.step;
+    quantidadeInput.value = (estoque > 0 && isAtivo) ? unidadeFormatada.valorInicial : 0;
+
+    // Adicionar placeholder com dica da unidade
+    quantidadeInput.placeholder = `Ex: 1${unidadeFormatada.sufixo}`;
+
+    // Mostrar seção do produto selecionado
+    document.getElementById('produto-selecionado').style.display = 'block';
+
+    if (estoque > 0 && isAtivo) {
+        document.getElementById('dados-alocacao').style.display = 'block';
+        calcularValorTotal();
+        atualizarResumo();
+
+        // Mostrar alerta informativo sobre a unidade
+        showAlert(`Produto selecionado: ${produto.nome} (unidade: ${unidadeFormatada.nome})`, 'info');
+    } else {
+        document.getElementById('dados-alocacao').style.display = 'none';
+        const motivo = !isAtivo ? 'produto inativo' : 'estoque zerado';
+        showAlert(`Produto indisponível para alocação: ${motivo}`, 'warning');
+    }
+}
+
+function configurarFormulario() {
+    // Calcular valor total quando quantidade mudar
+    document.getElementById('quantidade').addEventListener('input', function() {
+        calcularValorTotal();
+        atualizarResumo();
+    });
+
+    // Atualizar resumo quando obra ou funcionário mudarem
+    document.getElementById('obra-select').addEventListener('change', atualizarResumo);
+<<<<<<< HEAD
+    document.getElementById('funcionario-select').addEventListener('change', atualizarResumo);
+=======
+    document.getElementById('funcionario-logado').addEventListener('DOMSubtreeModified', atualizarResumo); // Listen for changes to the span text
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+
+    // Submissão do formulário
+    document.getElementById('form-alocacao').addEventListener('submit', function(e) {
+        e.preventDefault();
+        mostrarModalConfirmacao();
+    });
+}
+
+function calcularValorTotal() {
+    if (!produtoSelecionado) return;
+
+    const quantidade = parseInt(document.getElementById('quantidade').value) || 0;
+    const valorTotal = quantidade * produtoSelecionado.preco;
+
+    document.getElementById('valor-total').value = formatCurrency(valorTotal);
+}
+
+function atualizarResumo() {
+    if (!produtoSelecionado) return;
+
+    const quantidade = parseInt(document.getElementById('quantidade').value) || 0;
+    const obraId = document.getElementById('obra-select').value;
+<<<<<<< HEAD
+    const funcionarioSelect = document.getElementById('funcionario-select').value;
+
+    const obra = obras.find(o => o.id == obraId);
+
+    // Determinar nome do funcionário
+    let nomeFuncionario = '';
+    if (funcionarioSelect) {
+        if (funcionarioSelect.startsWith('user_')) {
+            const option = document.querySelector(`option[value="${funcionarioSelect}"]`);
+            nomeFuncionario = option ? option.textContent : 'Usuário Logado';
+        } else {
+            const funcionario = funcionarios.find(f => f.id == funcionarioSelect);
+            nomeFuncionario = funcionario ? funcionario.nome : '';
+        }
+    }
+
+=======
+    const nomeFuncionarioSpan = document.getElementById('funcionario-logado');
+    const nomeFuncionario = nomeFuncionarioSpan ? nomeFuncionarioSpan.textContent : '';
+
+    const obra = obras.find(o => o.id == obraId);
+
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+    const valorTotal = quantidade * produtoSelecionado.preco;
+
+    const unidadeMedida = produtoSelecionado.unidade_medida || 'unidade';
+    const quantidadeFormatada = formatarQuantidade(quantidade, unidadeMedida);
+
+    const resumo = document.getElementById('resumo-alocacao');
+    resumo.innerHTML = `
+        <div class="mb-2">
+            <strong>Produto:</strong><br>
+            <small>${produtoSelecionado.codigo} - ${produtoSelecionado.nome}</small>
+        </div>
+        <div class="mb-2">
+            <strong>Quantidade:</strong> ${quantidadeFormatada}<br>
+            <strong>Valor Total:</strong> ${formatCurrency(valorTotal)}
+        </div>
+        ${obra ? `<div class="mb-2"><strong>Obra:</strong><br><small>${obra.numero_obra} - ${obra.nome_obra}</small></div>` : ''}
+        ${nomeFuncionario ? `<div class="mb-2"><strong>Funcionário:</strong><br><small>${nomeFuncionario}</small></div>` : ''}
+    `;
+}
+
+function mostrarModalConfirmacao() {
+    if (!validarFormulario()) return;
+
+    const quantidade = parseInt(document.getElementById('quantidade').value);
+    const obraId = document.getElementById('obra-select').value;
+<<<<<<< HEAD
+    const funcionarioSelect = document.getElementById('funcionario-select').value;
+    const observacoes = document.getElementById('observacoes').value;
+
+    const obra = obras.find(o => o.id == obraId);
+
+    // Determinar nome do funcionário para a modal
+    let nomeFuncionarioModal = '';
+    if (funcionarioSelect.startsWith('user_')) {
+        const option = document.querySelector(`option[value="${funcionarioSelect}"]`);
+        nomeFuncionarioModal = option ? option.textContent : 'Usuário Logado';
+    } else {
+        const funcionario = funcionarios.find(f => f.id == funcionarioSelect);
+        nomeFuncionarioModal = funcionario ? funcionario.nome : 'Funcionário não identificado';
+    }
+=======
+    const observacoes = document.getElementById('observacoes').value;
+
+    const obra = obras.find(o => o.id == obraId);
+    const nomeFuncionarioModal = document.getElementById('funcionario-logado').textContent;
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+
+    const valorTotal = quantidade * produtoSelecionado.preco;
+
+    const modalBody = document.getElementById('modal-confirmacao-body');
+    modalBody.innerHTML = `
+        <div class="alert alert-info">
+            <strong>Confirme os dados da alocação:</strong>
+        </div>
+
+        <table class="table table-sm">
+            <tr>
+                <td><strong>Produto:</strong></td>
+                <td>${produtoSelecionado.codigo} - ${produtoSelecionado.nome}</td>
+            </tr>
+            <tr>
+                <td><strong>Quantidade:</strong></td>
+                <td>${formatarQuantidade(quantidade, produtoSelecionado.unidade_medida || 'unidade')}</td>
+            </tr>
+            <tr>
+                <td><strong>Obra:</strong></td>
+                <td>${obra.numero_obra} - ${obra.nome_obra}</td>
+            </tr>
+            <tr>
+                <td><strong>Funcionário:</strong></td>
+                <td>${nomeFuncionarioModal}</td>
+            </tr>
+            <tr>
+                <td><strong>Valor Total:</strong></td>
+                <td><strong>${formatCurrency(valorTotal)}</strong></td>
+            </tr>
+            ${observacoes ? `<tr><td><strong>Observações:</strong></td><td>${observacoes}</td></tr>` : ''}
+        </table>
+
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            Esta ação irá reduzir o estoque do produto de ${formatarQuantidade(produtoSelecionado.quantidade_estoque || produtoSelecionado.estoque, produtoSelecionado.unidade_medida || 'unidade')} para ${formatarQuantidade((produtoSelecionado.quantidade_estoque || produtoSelecionado.estoque) - quantidade, produtoSelecionado.unidade_medida || 'unidade')}.
+        </div>
+    `;
+
+    new bootstrap.Modal(document.getElementById('modalConfirmacao')).show();
+}
+
+async function confirmarAlocacao() {
+    const quantidade = parseInt(document.getElementById('quantidade').value);
+    const obraId = document.getElementById('obra-select').value;
+<<<<<<< HEAD
+    const funcionarioSelect = document.getElementById('funcionario-select').value;
+    const observacoes = document.getElementById('observacoes').value;
+
+    // Determinar se é usuário logado ou funcionário cadastrado
+    let funcionarioId;
+    if (funcionarioSelect.startsWith('user_')) {
+        funcionarioId = 1; // ID padrão para usuários do sistema
+    } else {
+        funcionarioId = parseInt(funcionarioSelect);
+=======
+    const observacoes = document.getElementById('observacoes').value;
+
+    // Obter o ID do usuário logado
+    let userId = null;
+    try {
+        const userResponse = await fetch('/api/usuario-logado');
+        const userData = await userResponse.json();
+        if (userResponse.ok) {
+            userId = userData.id;
+        }
+    } catch (error) {
+        console.error("Erro ao obter ID do usuário logado:", error);
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+    }
+
+    const dados = {
+        produto_id: produtoSelecionado.id,
+        obra_id: parseInt(obraId),
+<<<<<<< HEAD
+        funcionario_id: funcionarioId,
+        quantidade: quantidade,
+        observacoes: observacoes,
+        usuario_logado: funcionarioSelect.startsWith('user_') // Flag para identificar se é usuário logado
+=======
+        funcionario_id: userId, // Usar o ID do usuário logado
+        quantidade: quantidade,
+        observacoes: observacoes,
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+    };
+
+    try {
+        const response = await fetch('/api/alocar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dados)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showAlert('Produto alocado com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalConfirmacao')).hide();
+            limparFormulario();
+            carregarUltimasAlocacoes();
+        } else {
+            showAlert('Erro ao alocar produto: ' + data.error, 'danger');
+            if (data.disponivel !== undefined) {
+                showAlert(`Estoque disponível: ${data.disponivel} unidades`, 'info');
+            }
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function validarFormulario() {
+    if (!produtoSelecionado) {
+        showAlert('Selecione um produto', 'warning');
+        return false;
+    }
+
+    const quantidade = parseInt(document.getElementById('quantidade').value);
+    if (!quantidade || quantidade <= 0) {
+        showAlert('Informe uma quantidade válida', 'warning');
+        return false;
+    }
+
+<<<<<<< HEAD
+    if (quantidade > produtoSelecionado.estoque) {
+        showAlert('Quantidade maior que o estoque disponível', 'warning');
+=======
+    // Verificar estoque com base na unidade de medida do produto
+    const estoqueDisponivel = produtoSelecionado.quantidade_estoque || produtoSelecionado.estoque || 0;
+    if (quantidade > estoqueDisponivel) {
+        showAlert(`Quantidade indisponível. Estoque: ${formatarQuantidade(estoqueDisponivel, produtoSelecionado.unidade_medida || 'unidade')}`, 'warning');
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+        return false;
+    }
+
+    if (!document.getElementById('obra-select').value) {
+        showAlert('Selecione uma obra', 'warning');
+        return false;
+    }
+
+<<<<<<< HEAD
+    if (!document.getElementById('funcionario-select').value) {
+        showAlert('Selecione um funcionário', 'warning');
+        return false;
+    }
+=======
+    // Funcionário é sempre o usuário logado - não precisa validar
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+
+    return true;
+}
+
+async function carregarUltimasAlocacoes() {
+    try {
+        const response = await fetch('/api/historico?periodo=semana');
+        const movimentacoes = await response.json();
+
+        if (response.ok) {
+            const alocacoes = movimentacoes.filter(m => m.tipo_movimentacao === 'ALOCACAO').slice(0, 5);
+            atualizarUltimasAlocacoes(alocacoes);
+        }
+    } catch (error) {
+        console.error('Erro ao carregar últimas alocações:', error);
+    }
+}
+
+function atualizarUltimasAlocacoes(alocacoes) {
+    const container = document.getElementById('ultimas-alocacoes');
+    container.innerHTML = '';
+
+    if (alocacoes.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">Nenhuma alocação recente</p>';
+        return;
+    }
+
+    alocacoes.forEach(alocacao => {
+        const item = document.createElement('div');
+        item.className = 'border-bottom pb-2 mb-2';
+
+        // Extrair data e hora da movimentação
+        const dataMovimentacao = new Date(alocacao.data_movimentacao);
+        const dataFormatada = dataMovimentacao.toLocaleDateString('pt-BR');
+        const horaFormatada = dataMovimentacao.toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+
+        // Obter unidade de medida do produto ou usar 'unidade' como padrão
+        const unidadeMedida = alocacao.produto ? alocacao.produto.unidade_medida || 'unidade' : 'unidade';
+        const unidadeFormatada = formatarUnidadeMedida(unidadeMedida);
+        const quantidadeFormatada = formatarQuantidade(alocacao.quantidade, unidadeMedida);
+
+        // Obter nome do usuário/funcionário
+        let nomeUsuario = 'N/A';
+        if (alocacao.funcionario && alocacao.funcionario.nome) {
+            nomeUsuario = alocacao.funcionario.nome;
+<<<<<<< HEAD
+=======
+        } else if (alocacao.usuario_logado && alocacao.usuario_logado.username) {
+            // Se não tiver funcionário, tenta usar o nome do usuário logado
+            nomeUsuario = `${alocacao.usuario_logado.username} (Logado)`;
+>>>>>>> c80e601 (Atualização do projeto Almoxarifado)
+        }
+
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div style="flex: 1; min-width: 0;">
+                    <div class="fw-bold text-primary small">${alocacao.produto ? alocacao.produto.nome : 'Produto N/A'}</div>
+                    <div class="text-muted small">Código: ${alocacao.produto ? alocacao.produto.codigo : 'N/A'}</div>
+                </div>
+                <div class="text-end text-muted small ms-2">
+                    <div>${dataFormatada}</div>
+                    <div><strong>${horaFormatada}</strong></div>
+                </div>
+            </div>
+            <div class="text-muted small mt-1">
+                <i class="bi bi-box-arrow-right"></i> ${quantidadeFormatada} → ${alocacao.obra ? alocacao.obra.numero_obra : 'N/A'}<br>
+                <i class="bi bi-person"></i> ${nomeUsuario}<br>
+                <i class="bi bi-currency-dollar"></i> ${formatCurrency(alocacao.valor_total)}
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function limparFormulario() {
+    document.getElementById('form-alocacao').reset();
+    document.getElementById('busca-produto').value = '';
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('produto-selecionado').style.display = 'none';
+    document.getElementById('dados-alocacao').style.display = 'none';
+    document.getElementById('resumo-alocacao').innerHTML = '<p class="text-muted text-center">Selecione um produto para ver o resumo</p>';
+
+    // Resetar campos de unidade para padrão
+    document.getElementById('label-unidade-quantidade').textContent = '(em unidades)';
+    document.getElementById('max-unidade').textContent = 'un';
+    document.getElementById('sufixo-unidade').textContent = 'un';
+
+    const quantidadeInput = document.getElementById('quantidade');
+    quantidadeInput.step = '1';
+    quantidadeInput.min = '1';
+    quantidadeInput.placeholder = 'Ex: 1un';
+
+    produtoSelecionado = null;
+}
+
+// Helper functions
+function formatCurrency(value) {
+    return new Intl.NumberFormat('pt-BR', { 
+        style: 'currency', 
+        currency: 'BRL' 
+    }).format(value || 0);
+}
+
+function formatarUnidadeMedida(unidade) {
+    const unidades = {
+        'unidade': {
+            nome: 'unidades',
+            sufixo: 'un',
+            step: '1',
+            valorInicial: 1,
+            descricao: 'Unidades individuais'
+        },
+        'kilo': {
+            nome: 'quilogramas',
+            sufixo: 'kg',
+            step: '0.001',
+            valorInicial: 0.1,
+            descricao: 'Peso em quilogramas'
+        },
+        'pacote': {
+            nome: 'pacotes',
+            sufixo: 'pct',
+            step: '1',
+            valorInicial: 1,
+            descricao: 'Embalagens/Pacotes'
+        },
+        'metros': {
+            nome: 'metros',
+            sufixo: 'm',
+            step: '0.01',
+            valorInicial: 1,
+            descricao: 'Comprimento em metros'
+        },
+        'cento': {
+            nome: 'centos',
+            sufixo: 'cto',
+            step: '0.01',
+            valorInicial: 0.1,
+            descricao: 'Quantidade em centos'
+        },
+        'litro': {
+            nome: 'litros',
+            sufixo: 'L',
+            step: '0.01',
+            valorInicial: 1,
+            descricao: 'Volume em litros'
+        }
+    };
+
+    return unidades[unidade] || unidades['unidade'];
+}
+
+function formatarQuantidade(quantidade, unidade) {
+    const config = formatarUnidadeMedida(unidade);
+
+    if (unidade === 'unidade' || unidade === 'pacote') {
+        return `${Math.floor(quantidade)} ${config.sufixo}`;
+    } else {
+        return `${parseFloat(quantidade).toFixed(quantidade % 1 === 0 ? 0 : 3)} ${config.sufixo}`;
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+}
+
+function showAlert(message, type = 'info') {
+    // Mapear tipos de alerta
+    const typeMap = {
+        'error': 'danger',
+        'success': 'success',
+        'warning': 'warning',
+        'info': 'info',
+        'danger': 'danger'
+    };
+
+    const alertType = typeMap[type] || 'info';
+
+    // Criar container de alertas se não existir
+    let alertContainer = document.getElementById('alert-container');
+    if (!alertContainer) {
+        alertContainer = document.createElement('div');
+        alertContainer.id = 'alert-container';
+        alertContainer.style.position = 'fixed';
+        alertContainer.style.top = '20px';
+        alertContainer.style.right = '20px';
+        alertContainer.style.zIndex = '9999';
+        alertContainer.style.width = '400px';
+        document.body.appendChild(alertContainer);
+    }
+
+    // Criar alerta
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${alertType} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+    alertContainer.appendChild(alertDiv);
+
+    // Remover alerta automaticamente após 5 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

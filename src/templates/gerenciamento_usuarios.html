@@ -1,0 +1,367 @@
+
+{% extends "base.html" %}
+
+{% block title %}Gerenciamento de Usuários{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="bi bi-people"></i> Gerenciamento de Usuários</h4>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalUsuario">
+                    <i class="bi bi-plus-circle"></i> Novo Usuário
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuário</th>
+                                <th>Email</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th>Data Cadastro</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuariosTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Usuário -->
+<div class="modal fade" id="modalUsuario" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formUsuario">
+                <div class="modal-body">
+                    <input type="hidden" id="usuarioId">
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Usuário</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tipoUsuario" class="form-label">Tipo de Usuário</label>
+                        <select class="form-select" id="tipoUsuario" required>
+                            <option value="">Selecione...</option>
+                            <option value="almoxarifado">Almoxarifado</option>
+                            <option value="producao">Produção</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ativo" checked>
+                            <label class="form-check-label" for="ativo">
+                                Usuário Ativo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Alterar Senha -->
+<div class="modal fade" id="modalAlterarSenha" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Alterar Senha do Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formAlterarSenha">
+                <div class="modal-body">
+                    <input type="hidden" id="usuarioIdSenha">
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Alterando senha para: <strong id="nomeUsuarioSenha"></strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="novaSenha" class="form-label">Nova Senha</label>
+                        <input type="password" class="form-control" id="novaSenha" required minlength="6">
+                        <div class="form-text">A senha deve ter pelo menos 6 caracteres.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirmarSenha" class="form-label">Confirmar Nova Senha</label>
+                        <input type="password" class="form-control" id="confirmarSenha" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Alterar Senha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    carregarUsuarios();
+    
+    document.getElementById('formUsuario').addEventListener('submit', salvarUsuario);
+    document.getElementById('formAlterarSenha').addEventListener('submit', salvarNovaSenha);
+});
+
+async function carregarUsuarios() {
+    try {
+        const response = await fetch('/api/users');
+        const usuarios = await response.json();
+        
+        const tbody = document.getElementById('usuariosTableBody');
+        
+        if (usuarios.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum usuário encontrado</td></tr>';
+        } else {
+            tbody.innerHTML = usuarios.map(usuario => `
+                <tr>
+                    <td>${usuario.id}</td>
+                    <td>${usuario.username}</td>
+                    <td>${usuario.email}</td>
+                    <td>
+                        <span class="badge ${usuario.tipo_usuario === 'almoxarifado' ? 'bg-info' : 'bg-warning'}">
+                            ${usuario.tipo_usuario === 'almoxarifado' ? 'Almoxarifado' : 'Produção'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${usuario.ativo ? 'bg-success' : 'bg-danger'}">
+                            ${usuario.ativo ? 'Ativo' : 'Inativo'}
+                        </span>
+                    </td>
+                    <td>${formatDate(usuario.data_cadastro)}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-warning" onclick="alterarSenhaUsuario(${usuario.id}, '${usuario.username}')" title="Alterar Senha">
+                                <i class="bi bi-key"></i>
+                            </button>
+                            ${!usuario.is_admin ? `
+                            <button class="btn btn-sm btn-outline-danger" onclick="excluirUsuario(${usuario.id})" title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Erro ao carregar usuários:', error);
+        showAlert('Erro ao carregar usuários', 'danger');
+    }
+}
+
+async function salvarUsuario(e) {
+    e.preventDefault();
+    
+    // Validar campos obrigatórios
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const tipoUsuario = document.getElementById('tipoUsuario').value;
+    
+    if (!username) {
+        showAlert('Nome de usuário é obrigatório!', 'danger');
+        return;
+    }
+    
+    if (!email) {
+        showAlert('Email é obrigatório!', 'danger');
+        return;
+    }
+    
+    if (!password) {
+        showAlert('Senha é obrigatória!', 'danger');
+        return;
+    }
+    
+    if (!tipoUsuario) {
+        showAlert('Tipo de usuário é obrigatório!', 'danger');
+        return;
+    }
+    
+    try {
+        const data = {
+            username: username,
+            email: email,
+            password: password,
+            tipo_usuario: tipoUsuario,
+            ativo: document.getElementById('ativo').checked
+        };
+        
+        console.log('Dados enviados:', data); // Debug
+        
+        const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        console.log('Resposta recebida:', result); // Debug
+        
+        if (response.ok) {
+            showAlert('Usuário criado com sucesso!', 'success');
+            document.getElementById('modalUsuario').querySelector('.btn-close').click();
+            carregarUsuarios();
+            limparFormulario();
+        } else {
+            showAlert(result.error || 'Erro ao criar usuário', 'danger');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao criar usuário:', error);
+        showAlert('Erro de conexão. Verifique sua internet e tente novamente.', 'danger');
+    }
+}
+
+
+
+async function desativarUsuario(id) {
+    if (confirm('Tem certeza que deseja desativar este usuário?')) {
+        try {
+            const response = await fetch(`/api/users/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                showAlert('Usuário desativado com sucesso!', 'success');
+                carregarUsuarios();
+            } else {
+                const result = await response.json();
+                showAlert(result.error || 'Erro ao desativar usuário', 'danger');
+            }
+            
+        } catch (error) {
+            console.error('Erro ao desativar usuário:', error);
+            showAlert('Erro ao desativar usuário', 'danger');
+        }
+    }
+}
+
+async function excluirUsuario(id) {
+    if (confirm('Tem certeza que deseja EXCLUIR permanentemente este usuário? Esta ação não pode ser desfeita!')) {
+        try {
+            const response = await fetch(`/api/users/${id}/delete`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                showAlert('Usuário excluído com sucesso!', 'success');
+                carregarUsuarios();
+            } else {
+                const result = await response.json();
+                showAlert(result.error || 'Erro ao excluir usuário', 'danger');
+            }
+            
+        } catch (error) {
+            console.error('Erro ao excluir usuário:', error);
+            showAlert('Erro ao excluir usuário', 'danger');
+        }
+    }
+}
+
+function alterarSenhaUsuario(id, username) {
+    document.getElementById('usuarioIdSenha').value = id;
+    document.getElementById('nomeUsuarioSenha').textContent = username;
+    document.getElementById('novaSenha').value = '';
+    document.getElementById('confirmarSenha').value = '';
+    
+    new bootstrap.Modal(document.getElementById('modalAlterarSenha')).show();
+}
+
+async function salvarNovaSenha(e) {
+    e.preventDefault();
+    
+    const novaSenha = document.getElementById('novaSenha').value;
+    const confirmarSenha = document.getElementById('confirmarSenha').value;
+    const usuarioId = document.getElementById('usuarioIdSenha').value;
+    
+    if (novaSenha !== confirmarSenha) {
+        showAlert('As senhas não coincidem!', 'danger');
+        return;
+    }
+    
+    if (novaSenha.length < 6) {
+        showAlert('A senha deve ter pelo menos 6 caracteres!', 'danger');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/users/${usuarioId}/alterar-senha`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                nova_senha: novaSenha
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('Senha alterada com sucesso!', 'success');
+            document.getElementById('modalAlterarSenha').querySelector('.btn-close').click();
+        } else {
+            showAlert(result.error || 'Erro ao alterar senha', 'danger');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao alterar senha:', error);
+        showAlert('Erro ao alterar senha', 'danger');
+    }
+}
+
+function limparFormulario() {
+    document.getElementById('formUsuario').reset();
+    document.getElementById('usuarioId').value = '';
+    document.getElementById('password').required = true;
+    document.querySelector('#modalUsuario .modal-title').textContent = 'Novo Usuário';
+}
+
+// Limpar formulário quando modal for fechado
+document.getElementById('modalUsuario').addEventListener('hidden.bs.modal', function() {
+    limparFormulario();
+});
+</script>
+{% endblock %}

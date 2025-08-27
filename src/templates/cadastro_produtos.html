@@ -1,0 +1,518 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro de Produtos - Sistema de Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-5 text-center mb-4">
+            <i class="bi bi-plus-circle"></i> Cadastro de Produtos
+        </h1>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-box"></i> Informações do Produto
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="form-produto">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="codigo" class="form-label">
+                                <i class="bi bi-upc"></i> Código do Produto *
+                            </label>
+                            <input type="text" class="form-control" id="codigo" name="codigo" required>
+                            <div class="form-text">Código único para identificação do produto</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="categoria" class="form-label">
+                                <i class="bi bi-tags"></i> Categoria *
+                            </label>
+                            <select class="form-select" id="categoria" name="categoria" required>
+                                <option value="">Selecione a categoria</option>
+                                <!-- Categorias serão carregadas dinamicamente -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">
+                            <i class="bi bi-box-seam"></i> Nome do Produto *
+                        </label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">
+                            <i class="bi bi-card-text"></i> Descrição
+                        </label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fornecedor" class="form-label">
+                                <i class="bi bi-building"></i> Fornecedor
+                            </label>
+                            <select class="form-select" id="fornecedor" name="fornecedor">
+                                <option value="">Selecione o fornecedor</option>
+                                <!-- Fornecedores serão carregados dinamicamente -->
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="local_produto" class="form-label">
+                                <i class="bi bi-geo-alt"></i> Local do Produto
+                            </label>
+                            <div class="search-container">
+                                <input type="text" class="form-control" id="localProduto" placeholder="Digite para buscar locais..." autocomplete="off">
+                                <div class="search-results" id="locaisResults"></div>
+                            </div>
+                            <input type="hidden" id="localProdutoId">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="preco" class="form-label">
+                                <i class="bi bi-currency-dollar"></i> Preço (R$)
+                            </label>
+                            <input type="number" class="form-control" id="preco" name="preco" 
+                                   step="0.01" min="0" value="0.00">
+                            <div class="form-text">Opcional - padrão R$ 0,00</div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="unidade_medida" class="form-label">
+                                <i class="bi bi-rulers"></i> Unidade de Medida *
+                            </label>
+                            <select class="form-select" id="unidade_medida" name="unidade_medida" required>
+                                <option value="unidade">Unidade</option>
+                                <option value="kilo">Quilograma (Kg)</option>
+                                <option value="pacote">Pacote</option>
+                                <option value="metros">Metros (m)</option>
+                                <option value="cento">Cento</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="quantidade_estoque" class="form-label">
+                                <i class="bi bi-archive"></i> Quantidade Inicial
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="quantidade_estoque" 
+                                       name="quantidade_estoque" min="0" value="0" step="0.001">
+                                <span class="input-group-text" id="unidade-display">unidade(s)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary me-md-2" onclick="limparFormulario()">
+                            <i class="bi bi-arrow-clockwise"></i> Limpar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Cadastrar Produto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Produtos Recém Cadastrados -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-check"></i> Produtos Recém Cadastrados
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nome</th>
+                                <th>Categoria</th>
+                                <th>Fornecedor</th>
+                                <th>Local</th>
+                                <th>Preço</th>
+                                <th>Estoque</th>
+                                <th>Data Cadastro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="produtos-recentes">
+                            <tr>
+                                <td colspan="8" class="text-center">Carregando produtos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    carregarProdutosRecentes();
+    carregarCategorias();
+    carregarFornecedores();
+
+    // Configurar formulário
+    document.getElementById('form-produto').addEventListener('submit', cadastrarProduto);
+
+    // Validação em tempo real do código
+    document.getElementById('codigo').addEventListener('blur', validarCodigo);
+    
+    // Controle inteligente de unidades
+    configurarUnidadeMedida();
+});
+
+async function carregarCategorias() {
+    try {
+        const response = await fetch('/api/categorias');
+        const categorias = await response.json();
+
+        if (response.ok) {
+            const select = document.getElementById('categoria');
+            select.innerHTML = '<option value="">Selecione a categoria</option>';
+
+            categorias.forEach(categoria => {
+                const option = document.createElement('option');
+                option.value = categoria.nome;
+                option.textContent = categoria.nome;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+    }
+}
+
+async function carregarFornecedores() {
+    try {
+        const response = await fetch('/api/fornecedores');
+        const fornecedores = await response.json();
+
+        if (response.ok) {
+            const select = document.getElementById('fornecedor');
+            select.innerHTML = '<option value="">Selecione o fornecedor</option>';
+
+            fornecedores.forEach(fornecedor => {
+                const option = document.createElement('option');
+                option.value = fornecedor.nome;
+                option.textContent = fornecedor.nome;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar fornecedores:', error);
+    }
+}
+
+async function cadastrarProduto(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const produto = Object.fromEntries(formData.entries());
+
+    // Validações
+    if (!produto.codigo.trim()) {
+        showAlert('Código do produto é obrigatório', 'warning');
+        return;
+    }
+
+    if (!produto.nome.trim()) {
+        showAlert('Nome do produto é obrigatório', 'warning');
+        return;
+    }
+
+    if (!produto.categoria) {
+        showAlert('Categoria é obrigatória', 'warning');
+        return;
+    }
+    
+    if (!produto.unidade_medida) {
+        showAlert('Unidade de medida é obrigatória', 'warning');
+        return;
+    }
+
+    // Adicionar o ID do local ao objeto do produto, se existir
+    const localProdutoId = document.getElementById('localProdutoId').value;
+    if (localProdutoId) {
+        produto.local_produto_id = parseInt(localProdutoId);
+    }
+    // Remover o campo localProduto do produto, pois usaremos o ID
+    delete produto.localProduto;
+
+
+    try {
+        const response = await fetch('/api/produtos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(produto)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showAlert('Produto cadastrado com sucesso!', 'success');
+            limparFormulario();
+            carregarProdutosRecentes();
+        } else {
+            showAlert('Erro ao cadastrar produto: ' + data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+async function validarCodigo() {
+    const codigo = document.getElementById('codigo').value.trim();
+    if (!codigo) return;
+
+    try {
+        const response = await fetch(`/api/produtos?busca=${encodeURIComponent(codigo)}`);
+        const produtos = await response.json();
+
+        const produtoExistente = produtos.find(p => p.codigo.toLowerCase() === codigo.toLowerCase());
+        if (produtoExistente) {
+            showAlert('Código já existe! Produto: ' + produtoExistente.nome, 'warning');
+            document.getElementById('codigo').focus();
+        }
+    } catch (error) {
+        console.error('Erro ao validar código:', error);
+    }
+}
+
+async function carregarProdutosRecentes() {
+    try {
+        const response = await fetch('/api/produtos');
+        const produtos = await response.json();
+
+        if (response.ok) {
+            // Ordenar por data de cadastro (mais recentes primeiro) e pegar os 10 primeiros
+            const produtosRecentes = produtos
+                .sort((a, b) => new Date(b.data_cadastro) - new Date(a.data_cadastro))
+                .slice(0, 10);
+
+            atualizarTabelaProdutos(produtosRecentes);
+        } else {
+            showAlert('Erro ao carregar produtos: ' + produtos.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Erro de conexão: ' + error.message, 'danger');
+    }
+}
+
+function atualizarTabelaProdutos(produtos) {
+    const tbody = document.getElementById('produtos-recentes');
+    tbody.innerHTML = '';
+
+    if (produtos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhum produto cadastrado</td></tr>';
+        return;
+    }
+
+    produtos.forEach(produto => {
+        const tr = document.createElement('tr');
+
+        let badgeCategoria = 'bg-primary';
+        if (produto.categoria.toLowerCase().includes('a')) badgeCategoria = 'bg-danger';
+        else if (produto.categoria.toLowerCase().includes('b')) badgeCategoria = 'bg-warning';
+        else if (produto.categoria.toLowerCase().includes('c')) badgeCategoria = 'bg-success';
+
+        tr.innerHTML = `
+            <td><strong>${produto.codigo}</strong></td>
+            <td>${produto.nome}</td>
+            <td><span class="badge ${badgeCategoria}">${produto.categoria}</span></td>
+            <td>${produto.fornecedor || '-'}</td>
+            <td>${produto.local_produto || '-'}</td>
+            <td>${formatCurrency(produto.preco)}</td>
+            <td>
+                <span class="badge ${produto.quantidade_estoque > 0 ? 'bg-success' : 'bg-secondary'}">
+                    ${formatarQuantidade(produto.quantidade_estoque, produto.unidade_medida)}
+                </span>
+            </td>
+            <td>${formatDate(produto.data_cadastro)}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+function formatarQuantidade(quantidade, unidade) {
+    const sufixos = {
+        'unidade': '',
+        'kilo': ' Kg',
+        'pacote': ' pct',
+        'metros': ' m',
+        'cento': ' cto'
+    };
+    
+    const sufixo = sufixos[unidade] || '';
+    
+    // Formatar número baseado na unidade
+    if (unidade === 'unidade' || unidade === 'pacote') {
+        return `${Math.floor(quantidade)}${sufixo}`;
+    } else {
+        return `${parseFloat(quantidade).toFixed(quantidade % 1 === 0 ? 0 : 3)}${sufixo}`;
+    }
+}
+
+function limparFormulario() {
+    document.getElementById('form-produto').reset();
+    document.getElementById('preco').value = '0.00';
+    document.getElementById('quantidade_estoque').value = '0';
+    document.getElementById('unidade_medida').value = 'unidade';
+    document.getElementById('localProduto').value = ''; // Limpa o campo de texto do autocomplete
+    document.getElementById('localProdutoId').value = ''; // Limpa o ID do local
+    
+    // Reconfigurar unidade
+    configurarUnidadeMedida();
+    
+    document.getElementById('codigo').focus();
+}
+
+// Focar no primeiro campo ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('codigo').focus();
+});
+
+function configurarUnidadeMedida() {
+    const selectUnidade = document.getElementById('unidade_medida');
+    const inputQuantidade = document.getElementById('quantidade_estoque');
+    const unidadeDisplay = document.getElementById('unidade-display');
+    
+    // Configurações para cada unidade
+    const configUnidades = {
+        'unidade': {
+            step: '1',
+            min: '0',
+            sufixo: 'unidade(s)',
+            decimal: false
+        },
+        'kilo': {
+            step: '0.001',
+            min: '0',
+            sufixo: 'Kg',
+            decimal: true
+        },
+        'pacote': {
+            step: '1',
+            min: '0',
+            sufixo: 'pacote(s)',
+            decimal: false
+        },
+        'metros': {
+            step: '0.01',
+            min: '0',
+            sufixo: 'metros',
+            decimal: true
+        },
+        'cento': {
+            step: '0.01',
+            min: '0',
+            sufixo: 'cento(s)',
+            decimal: true
+        }
+    };
+    
+    function atualizarUnidade() {
+        const unidadeSelecionada = selectUnidade.value;
+        const config = configUnidades[unidadeSelecionada];
+        
+        if (config) {
+            inputQuantidade.step = config.step;
+            inputQuantidade.min = config.min;
+            unidadeDisplay.textContent = config.sufixo;
+            
+            // Ajustar valor atual se necessário
+            const valorAtual = parseFloat(inputQuantidade.value) || 0;
+            if (!config.decimal && valorAtual % 1 !== 0) {
+                inputQuantidade.value = Math.floor(valorAtual);
+            }
+        }
+    }
+    
+    // Evento para mudança de unidade
+    selectUnidade.addEventListener('change', atualizarUnidade);
+    
+    // Configurar estado inicial
+    atualizarUnidade();
+}
+
+
+    // Autocomplete para locais
+    let timeoutLocal;
+    document.getElementById('localProduto').addEventListener('input', function() {
+        const termo = this.value.trim();
+        const resultsDiv = document.getElementById('locaisResults');
+
+        clearTimeout(timeoutLocal);
+
+        if (termo.length < 1) {
+            resultsDiv.style.display = 'none';
+            document.getElementById('localProdutoId').value = '';
+            return;
+        }
+
+        timeoutLocal = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/locais/busca?q=${encodeURIComponent(termo)}`);
+                const locais = await response.json();
+
+                if (response.ok) {
+                    if (locais.length > 0) {
+                        resultsDiv.innerHTML = locais.map(local => `
+                            <div class="search-item" onclick="selecionarLocal(${local.id}, '${local.texto_completo}')">
+                                <strong>${local.nome_local}</strong> - ${local.posicao}
+                                ${local.descricao ? `<br><small class="text-muted">${local.descricao}</small>` : ''}
+                            </div>
+                        `).join('');
+                        resultsDiv.style.display = 'block';
+                    } else {
+                        resultsDiv.innerHTML = '<div class="search-item text-muted">Nenhum local encontrado</div>';
+                        resultsDiv.style.display = 'block';
+                    }
+                } else {
+                    console.error('Erro ao buscar locais:', await response.text());
+                    resultsDiv.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('Erro ao buscar locais:', error);
+                resultsDiv.style.display = 'none';
+            }
+        }, 300);
+    });
+
+    function selecionarLocal(id, texto) {
+        document.getElementById('localProduto').value = texto;
+        document.getElementById('localProdutoId').value = id;
+        document.getElementById('locaisResults').style.display = 'none';
+    }
+
+    // Fechar resultados quando clicar fora
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-container')) {
+            document.getElementById('locaisResults').style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
